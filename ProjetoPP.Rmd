@@ -1,6 +1,6 @@
 ---
-title: "ProjetiConti"
-author: "Bruno Bregola"
+title: "ProjetoPP"
+author: "Bruno, Bernardo e Vinicius"
 date: "14/09/2020"
 output: html_document
 editor_options: 
