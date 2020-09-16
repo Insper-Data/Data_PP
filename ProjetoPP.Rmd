@@ -1,0 +1,158 @@
+---
+title: "ProjetiConti"
+author: "Bruno Bregola"
+date: "14/09/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+Pacotes
+```{r}
+
+library(janitor)
+library(vctrs)
+library(tidyverse)
+library(skimr)
+library(readxl)
+library(stringi)
+library(rvest)
+library(lubridate)
+
+```
+
+
+
+
+Puxando as bases
+```{r}
+
+covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
+
+
+tests <- read_csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv")
+
+
+CRT <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
+
+
+wjp_2019 <- read_excel("FINAL_2020_wjp_rule_of_law_index_HISTORICAL.xlsx", 
+                        sheet = "WJP ROL Index 2019 Scores") %>% filter(year == 2019)
+
+
+democracy <- read_excel("EIU-Democracy Indices - Dataset - v3.xlsx", 
+    sheet = "input-data-from-EIU-recentyrs", skip = 176)
+
+# us <- read.csv("https://raw.githubusercontent.com/OxCGRT/USA-covid-policy/master/data/OxCGRT_US_latest.csv") %>% 
+#   clean_names() %>% 
+#   mutate(date = ymd(date))
+
+```
+
+
+
+
+Limpando as bases
+```{r}
+
+# Limpando a base de testes (Our World in Data)
+
+t <- tests %>% 
+  select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
+  separate(Entity, c("country", "escala"), sep = " - ") 
+ 
+# Limpando a base Democracy Index (democracy)
+
+skim(democracy)
+
+colnames(democracy)[1] <- "location"
+
+dmi <- democracy %>% 
+        filter(!is.na(location)) %>% 
+        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
+        mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        mutate(Rank = as.integer(Rank)) %>% 
+        mutate(type = case_when(
+                      Rank <= 22 ~ "Full democracy",
+                      Rank >= 23 & Rank <= 75 ~ "Flawed democracy",
+                      Rank >= 77 & Rank <= 113 ~ "Hybrid regime",
+                      Rank >= 114 ~ "Authoritarian regime"))
+        
+# Limpando a base World Justice Project (Instituições)
+
+wjptidy <- wjp_2019 %>% 
+  pivot_longer(-Country, names_to = "Countries", values_to = "Countries Codes") %>%
+  pivot_wider(id_cols = c("Countries", "Countries Codes"), 
+              names_from = "Country", values_from = "Countries Codes") %>% 
+  select(-6) %>% 
+  rename("country_code" = "Country Code") %>% 
+  rename("country_name" = "Countries")
+
+# Limpando Response Tracker
+
+cpt <- CRT %>% 
+  clean_names() %>% 
+  mutate(date = ymd(date)) %>% 
+  rename(c("iso_code" = "country_code")) 
+
+
+
+
+```
+
+ 
+
+Juntando as bases
+```{r}
+
+#Unificação do World Justice com CPT
+
+wjp_cpt <- left_join(wjptidy, cpt)
+
+
+#Juntando Our world in data (covid) + our world in data (t) +  Democracy Index (dmi)
+
+sobra <- anti_join(covid, dmi)
+
+unique(sobra$location)
+
+junto <- covid %>% 
+  left_join(dmi) %>%  
+  left_join(t, by = c("location" = "country")) %>% 
+  select(-(new_tests:tests_units)) %>% 
+  filter(!is.na(type))
+
+#Juntando tudo
+
+base <- left_join(junto, wjp_cpt, by = c("location" = "Countries")) # não funciona ainda
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
