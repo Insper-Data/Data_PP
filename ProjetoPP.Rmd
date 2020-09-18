@@ -45,9 +45,12 @@ wjp_2019 <- read_excel("FINAL_2020_wjp_rule_of_law_index_HISTORICAL.xlsx",
 democracy <- read_excel("EIU-Democracy Indices - Dataset - v3.xlsx", 
     sheet = "input-data-from-EIU-recentyrs", skip = 176)
 
+# dmi <- read_csv("https://raw.githubusercontent.com/Insper-Data/Data_PP/master/bases/_EIU-Democracy%20Indices%20-%20Dataset%20-%20v3%20-%20input-data-from-EIU-recentyrs.csv")
+
 # us <- read.csv("https://raw.githubusercontent.com/OxCGRT/USA-covid-policy/master/data/OxCGRT_US_latest.csv") %>% 
 #   clean_names() %>% 
 #   mutate(date = ymd(date))
+
 
 ```
 
@@ -73,6 +76,7 @@ dmi <- democracy %>%
         filter(!is.na(location)) %>% 
         mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
         mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        mutate(location = str_remove(location, "of America")) %>% # na outra base não tem "of America" nos EUA. Tiro para o join funcionar
         mutate(Rank = as.integer(Rank)) %>% 
         mutate(type = case_when(
                       Rank <= 22 ~ "Full democracy",
@@ -112,7 +116,7 @@ Juntando as bases
 wjp_cpt <- left_join(wjptidy, cpt)
 
 
-#Juntando Our world in data (covid) + our world in data (t) +  Democracy Index (dmi)
+#Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
 sobra <- anti_join(covid, dmi)
 
@@ -123,6 +127,12 @@ junto <- covid %>%
   left_join(t, by = c("location" = "country")) %>% 
   select(-(new_tests:tests_units)) %>% 
   filter(!is.na(type))
+
+skim(junto)
+
+colnames(junto)
+
+
 
 #Juntando tudo
 
