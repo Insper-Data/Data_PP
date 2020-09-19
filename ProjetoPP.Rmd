@@ -92,7 +92,7 @@ wjptidy <- wjp_2019 %>%
               names_from = "Country", values_from = "Countries Codes") %>% 
   select(-6) %>% 
   rename("iso_code" = "Country Code") %>% 
-  rename("country_name" = "Countries") %>% 
+  rename("country_name" = "Countries")  
   
   
 
