@@ -92,32 +92,57 @@ wjptidy <- wjp_2019 %>%
               names_from = "Country", values_from = "Countries Codes") %>% 
   select(-6) %>% 
   rename("iso_code" = "Country Code") %>% 
-  rename("country_name" = "Countries")
+  rename("country_name" = "Countries") %>% 
+  
+  
 
 # Limpando Response Tracker
+
+
+contador = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) # gera um contador para restaura os EUA e UK
+dias = (1: (257 + contador))
 
 cpt <- CRT %>% 
   clean_names() %>% 
   mutate(date = ymd(date)) %>% 
   rename(c("iso_code" = "country_code")) %>% 
-  select(- c(region_name, region_code))
+  select(- c(region_name, region_code)) %>% 
+  relocate(confirmed_cases, .after = country_name)
+  
+
+us <- cpt %>% 
+  filter(country_name == "United States") %>% 
+  slice(dias)
+
+uk <- cpt %>% 
+  filter(country_name == "United Kingdom") %>% 
+  slice(dias)
 
 
-
+cpt <- cpt %>% 
+  filter(country_name != "United States" & iso_code != "USA") %>% 
+  filter(country_name != "United Kingdom" & iso_code != "GBR") %>%
+  bind_rows(us) %>% 
+  bind_rows(uk)
 
 ```
 
- 
+
 
 Juntando as bases
 ```{r}
+# Unificação do World Justice com CPT
 
-#Unificação do World Justice com CPT
+verificacao <- anti_join(cpt, wjptidy, by = "iso_code")
 
-wjp_cpt <- left_join(wjptidy, cpt)
+unique(xxx$country_name)
+
+wjp_cpt <- left_join(cpt, wjptidy, by = ("iso_code")) %>% 
+            select(-country_name.y) %>% 
+            rename(country_name = country_name.x)
 
 skim(wjp_cpt)
-#Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
+# Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
 sobra <- anti_join(covid, dmi)
 
@@ -134,9 +159,10 @@ skim(junto)
 colnames(junto)
 
 
-#Juntando tudo
+# Juntando tudo
 
-base <- left_join(junto, wjp_cpt, by = c("location" = "country_name", "date" = "date", "iso_code" =  "iso_code")) 
+base <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "date" = "date", "iso_code" =  "iso_code")) %>% 
+  select(-Year)
 
 
 skim(base)
