@@ -91,7 +91,7 @@ wjptidy <- wjp_2019 %>%
   pivot_wider(id_cols = c("Countries", "Countries Codes"), 
               names_from = "Country", values_from = "Countries Codes") %>% 
   select(-6) %>% 
-  rename("country_code" = "Country Code") %>% 
+  rename("iso_code" = "Country Code") %>% 
   rename("country_name" = "Countries")
 
 # Limpando Response Tracker
@@ -99,7 +99,8 @@ wjptidy <- wjp_2019 %>%
 cpt <- CRT %>% 
   clean_names() %>% 
   mutate(date = ymd(date)) %>% 
-  rename(c("iso_code" = "country_code")) 
+  rename(c("iso_code" = "country_code")) %>% 
+  select(- c(region_name, region_code))
 
 
 
@@ -115,7 +116,7 @@ Juntando as bases
 
 wjp_cpt <- left_join(wjptidy, cpt)
 
-
+skim(wjp_cpt)
 #Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
 sobra <- anti_join(covid, dmi)
@@ -135,9 +136,10 @@ colnames(junto)
 
 #Juntando tudo
 
-base <- left_join(junto, wjp_cpt, by = c("location" = "Countries")) # não funciona ainda
+base <- left_join(junto, wjp_cpt, by = c("location" = "country_name", "date" = "date", "iso_code" =  "iso_code")) 
 
 
+skim(base)
 
 ```
 
