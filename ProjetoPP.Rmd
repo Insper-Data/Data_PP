@@ -45,6 +45,8 @@ democracy <- read_excel("EIU-Democracy Indices - Dataset - v3.xlsx",
     sheet = "input-data-from-EIU-recentyrs", skip = 176)
 
 
+giniOWID <- read_csv("economic-inequality-gini-index.csv")
+
 ```
 
 
@@ -119,6 +121,15 @@ cpt <- cpt %>%
   bind_rows(us) %>% 
   bind_rows(uk)
 
+#Limpando Gini
+
+giniOWIDlatest <- giniOWID %>% 
+  group_by(Entity) %>% 
+  filter(Year == max(Year)) %>% 
+  rename(YearGINdata = Year) %>% 
+  clean_names()
+
+
 ```
 
 
@@ -145,9 +156,13 @@ skim(junto)
 
 # Juntando tudo
 
-base <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "date" = "date", "iso_code" =  "iso_code")) %>% 
+base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "date" = "date", "iso_code" =  "iso_code")) %>% 
   select(-Year)
 
+
+#Juntando com Gini
+
+base <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code"))
 
 skim(base)
 
