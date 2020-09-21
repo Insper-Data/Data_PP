@@ -88,9 +88,9 @@ wjptidy <- wjp_2019 %>%
               names_from = "Country", values_from = "Countries Codes") %>% 
   select(-6) %>% 
   rename("iso_code" = "Country Code") %>% 
-  rename("country_name" = "Countries")  
-  
-  
+  rename("country_name" = "Countries")
+
+wjptidy[, c(5:57)] <- sapply(wjptidy[, c(5:57)], as.numeric)
 
 # Limpando Response Tracker
 
@@ -165,6 +165,7 @@ base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "da
 base <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code"))
 
 skim(base)
+
 
 ```
 
