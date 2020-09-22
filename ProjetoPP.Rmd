@@ -1,5 +1,5 @@
 ---
-title: "ProjetoPP"
+title: "Projeto Insper Data - Politicas Publicas"
 author: "Bruno, Bernardo e Vinicius"
 date: "14/09/2020"
 output: html_document
@@ -162,10 +162,10 @@ base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "da
 
 #Juntando com Gini
 
-base <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code"))
+base <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code")) %>% 
+  select(!(m1_wildcard))
 
 skim(base)
-
 
 ```
 
