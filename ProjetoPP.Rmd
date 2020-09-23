@@ -142,7 +142,6 @@ wjp_cpt <- left_join(cpt, wjptidy, by = ("iso_code")) %>%
             select(-country_name.y) %>% 
             rename(country_name = country_name.x)
 
-skim(wjp_cpt)
 # Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
 junto <- covid %>% 
@@ -150,8 +149,6 @@ junto <- covid %>%
   left_join(t, by = c("location" = "country", "date" = "date")) %>% 
   select(-(new_tests:tests_units), -("ISO code")) %>% 
   filter(!is.na(type))
-
-skim(junto)
 
 
 # Juntando tudo
@@ -165,17 +162,16 @@ base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "da
 base_inter <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code")) %>% 
   select(!(m1_wildcard))
 
-skim(base)
 
 ```
 
 
 
 
-Criando variável de dias depois de 150 infecções por país
+Criando variável que conta quantos dias passaram desde que o país atingiu 1 caso por milhão de habitantes
 ```{r}
 
-marcador <- base_inter %>% 
+marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
   group_by(country_name) %>% 
   mutate(rank = min_rank(total_cases_per_million)) %>% 
@@ -185,40 +181,25 @@ marcador <- base_inter %>%
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
 
-
+rm(uk, us, base_semi, base_inter, marcador)
 
 
 ```
 
 
+Análise descritiva Democracy Index
+
+```{r}
+skim(dmi)
+
+dmi %>%
+  head(10) %>% 
+  ggplot(aes(x = reorder(location, -Rank), Rank, fill = type)) + 
+  geom_col() +
+  coord_flip()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
