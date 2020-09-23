@@ -162,12 +162,69 @@ base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "da
 
 #Juntando com Gini
 
-base <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code")) %>% 
+base_inter <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code")) %>% 
   select(!(m1_wildcard))
 
 skim(base)
 
 ```
+
+
+
+
+Criando variável de dias depois de 150 infecções por país
+```{r}
+
+marcador <- base_inter %>% 
+  filter(total_cases_per_million >= 1) %>% 
+  group_by(country_name) %>% 
+  mutate(rank = min_rank(total_cases_per_million)) %>% 
+  mutate(days_after_1pm = rank(rank, ties.method = "first")) %>% 
+  relocate(days_after_1pm, .after = date) 
+
+base <- left_join(base_inter, marcador) %>% 
+  relocate(c(days_after_1pm, total_cases_per_million), .after = date)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
