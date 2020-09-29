@@ -194,6 +194,12 @@ Análise descritiva - Democracy Index
 skim(dmi)
 
 dmi %>%
+  ggplot(aes(x = reorder(location, -`Overall Score`), `Overall Score`, fill = type)) + 
+  geom_col() +
+  coord_flip() +
+  theme_clean()
+
+dmi %>%
   filter(`Overall Score` > 6) %>% 
   ggplot(aes(x = reorder(location, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
