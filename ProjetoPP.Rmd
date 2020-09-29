@@ -209,7 +209,7 @@ Análise descritiva - Oxford Covid-19 Government Response Tracker
 ```{r}
 skim(cpt)
 
-#Análise das variáveis "falg", que indicam se as políticas foram específicas ou gerais.
+#Análise das variáveis "flag", que indicam se as políticas foram específicas ou gerais.
 
 cpt %>% 
   select(country_name, c1_flag, 
