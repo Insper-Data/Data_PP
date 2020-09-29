@@ -19,6 +19,8 @@ library(readxl)
 library(stringi)
 library(rvest)
 library(lubridate)
+library(ggthemes)
+library(spData)
 
 ```
 
@@ -187,21 +189,81 @@ rm(uk, us, base_semi, base_inter, marcador)
 ```
 
 
-Análise descritiva Democracy Index
+Análise descritiva - Democracy Index
 
 ```{r}
 skim(dmi)
 
 dmi %>%
-  head(10) %>% 
-  ggplot(aes(x = reorder(location, -Rank), Rank, fill = type)) + 
+  ggplot(aes(x = reorder(location, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
-  coord_flip()
+  coord_flip() +
+  theme_clean()
 
 
 ```
 
 
+Análise descritiva - Oxford Covid-19 Government Response Tracker
+
+```{r}
+skim(cpt)
+
+#Análise das variáveis "falg", que indicam se as políticas foram específicas ou gerais.
+
+cpt %>% 
+  select(country_name, c1_flag, 
+         c2_flag, c3_flag, c4_flag, c5_flag,
+         c6_flag, c7_flag, e1_flag, h1_flag) %>% 
+  filter(!is.na(c1_flag), 
+         !is.na(c2_flag), !is.na(c3_flag), 
+         !is.na(c4_flag), !is.na(c5_flag),
+         !is.na(c6_flag), !is.na(c7_flag), 
+         !is.na(e1_flag), !is.na(h1_flag)) %>% 
+  group_by(country_name) %>% 
+  summarise(generalismo = mean((c1_flag + 
+         c2_flag + c3_flag + c4_flag + c5_flag +
+         c6_flag + c7_flag + e1_flag + h1_flag)/8)) 
+  #Fazer mapa com isso, para ver o nível de generalismo das políticas ao redor do mundo
+
+#Análise da variável C8 (International Travel Controls)
+
+cpt %>% 
+  select(country_name, c8_international_travel_controls, date) %>% 
+  filter(!is.na(c8_international_travel_controls))
+  #Fazer um gráfico, em mapa, dos travel controls ao longo do tempo
+
+#Análise da relação entre C5 e E1
+
+cpt %>% 
+  select(country_name, c5_close_public_transport, e1_income_support) %>% 
+  filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>% 
+  group_by(country_name) %>% 
+  summarise(media_fechamento_transporte = mean(c5_close_public_transport),
+            media_suportederenda = mean(e1_income_support)) %>% 
+  ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
+    geom_point() +
+    geom_smooth(method = lm, se = FALSE)
+  
+#Análise da relação entre E4 e C8 
+  
+cpt %>% 
+  select(country_name, e4_international_support, c8_international_travel_controls) %>% 
+  filter(!is.na(e4_international_support), 
+         !is.na(c8_international_travel_controls)) %>% 
+  group_by(country_name) %>% 
+  summarise(media_log_suporte = log(mean(e4_international_support)),
+            media_controle = mean(c8_international_travel_controls)) %>% 
+  filter(media_log_suporte > 0) %>% 
+  ggplot(mapping = aes(x = media_log_suporte, y = media_controle)) +
+    geom_point() +
+    geom_smooth(se = FALSE)
+
+#Análise H2 e H5
+
+
+
+```
 
 
 
