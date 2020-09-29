@@ -213,6 +213,8 @@ dmi %>%
   coord_flip() +
   theme_clean()
 
+#Arrumar os gráficos + Extender a análise
+
 ```
 
 
