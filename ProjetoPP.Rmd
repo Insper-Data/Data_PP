@@ -21,6 +21,7 @@ library(rvest)
 library(lubridate)
 library(ggthemes)
 library(spData)
+library(ggrepel)
 
 ```
 
@@ -278,7 +279,107 @@ cpt %>%
 
 
 ```
+Análise descritiva da base World Justice Project 2019
 
+
+
+1) Agrupar de acordo com o grupo de renda e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre o nível de produto e a solidez institucional local
+```{r}
+
+wjp_income <- wjptidy %>% 
+  group_by(`Income Group`) %>% 
+  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
+
+```
+
+2)Agrupar de acordo com a região e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre a solidez institucional local e as regiões do mapa
+
+```{r}
+
+wjp_region <- wjptidy %>% 
+  group_by(Region) %>% 
+  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
+
+```
+
+3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
+
+```{r}
+
+wjptidy %>% 
+  select(country_name, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, Factor, y = `Factor 1: Constraints on Government Powers`)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+#  geom_text(aes(label=ifelse(`Factor 6: Regulatory Enforcement`>0.7,as.character(iso_code),'')),hjust=0,vjust=0) +
+  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.7),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+```
+4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o fator 2 (Absence of Corruption)
+```{r}
+
+wjptidy %>% 
+  select(country_name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
+  ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  #  geom_text(aes(label=ifelse(`7.3 Civil justice is free of corruption`>0.9,as.character(iso_code),'')),hjust=0,vjust=0) +
+  geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+
+```
+
+5) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
+
+```{r}
+
+wjptidy %>% 
+  select(country_name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, Factor, y = `Factor 5: Order and Security`)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  #  geom_text(aes(label=ifelse(`7.3 Civil justice is free of corruption`>0.9,as.character(iso_code),'')),hjust=0,vjust=0) +
+  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.82),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+
+```
+Entre as bases
+
+
+6) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
+
+```{r}
+
+x <- base %>% 
+  filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
+         !is.na(`Overall Score`), date == "2020-01-10" )
+
+base %>% 
+  select(country_name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, date) %>% 
+  filter(date == "2020-01-10") %>% 
+  filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
+         !is.na(`Overall Score`)) %>% 
+  ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`, Factor, y = `Overall Score`)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score`>0.82),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+
+```
+
+  
 
 
 
