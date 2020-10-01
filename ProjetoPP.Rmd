@@ -308,10 +308,9 @@ wjp_region <- wjptidy %>%
 
 wjptidy %>% 
   select(country_name, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
-  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, Factor, y = `Factor 1: Constraints on Government Powers`)) +
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
   geom_point() +
-  geom_smooth(se = FALSE) +
-#  geom_text(aes(label=ifelse(`Factor 6: Regulatory Enforcement`>0.7,as.character(iso_code),'')),hjust=0,vjust=0) +
+  geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.7),
                    aes(label = country_name),
                    box.padding   = 0.35, 
@@ -325,8 +324,7 @@ wjptidy %>%
   select(country_name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
   geom_point() +
-  geom_smooth(se = FALSE) +
-  #  geom_text(aes(label=ifelse(`7.3 Civil justice is free of corruption`>0.9,as.character(iso_code),'')),hjust=0,vjust=0) +
+  geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
                    aes(label = country_name),
                    box.padding   = 0.35, 
@@ -341,10 +339,9 @@ wjptidy %>%
 
 wjptidy %>% 
   select(country_name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
-  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, Factor, y = `Factor 5: Order and Security`)) +
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
   geom_point() +
-  geom_smooth(se = FALSE) +
-  #  geom_text(aes(label=ifelse(`7.3 Civil justice is free of corruption`>0.9,as.character(iso_code),'')),hjust=0,vjust=0) +
+  geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.82),
                    aes(label = country_name),
                    box.padding   = 0.35, 
@@ -368,18 +365,18 @@ base %>%
   filter(date == "2020-01-10") %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`)) %>% 
-  ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`, Factor, y = `Overall Score`)) +
+  ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`,
+                       y = `Overall Score`)) +
   geom_point() +
-  geom_smooth(se = FALSE) +
-  geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score`>0.82),
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score`>0.8),
                    aes(label = country_name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') 
 
 ```
-
-  
+7) 
 
 
 
