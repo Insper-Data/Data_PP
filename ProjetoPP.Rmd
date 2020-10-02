@@ -23,6 +23,8 @@ library(ggthemes)
 library(spData)
 library(ggrepel)
 library(sf)
+library(gganimate)
+library(av)
 
 
 ```
@@ -533,8 +535,217 @@ base %>%
                    segment.color = 'grey50') 
 
 ```
-7) 
 
+Análise descritiva da base World Justice Project 2019
+
+
+
+1) Agrupar de acordo com o grupo de renda e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre o nível de produto e a solidez institucional local
+```{r}
+
+wjp_income <- wjptidy %>% 
+  group_by(`Income Group`) %>% 
+  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
+
+```
+
+
+
+2)Agrupar de acordo com a região e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre a solidez institucional local e as regiões do mapa
+```{r}
+
+wjp_region <- wjptidy %>% 
+  group_by(Region) %>% 
+  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
+
+```
+
+
+
+3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
+```{r}
+
+wjptidy %>% 
+  select(country_name, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.7),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+```
+
+
+
+4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o fator 2 (Absence of Corruption)
+```{r}
+
+wjptidy %>% 
+  select(country_name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
+  ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+
+```
+
+
+
+5) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
+```{r}
+
+wjptidy %>% 
+  select(country_name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.82),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+
+```
+
+Entre as bases
+
+6) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
+```{r}
+
+gen_names <- base %>% 
+  filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
+         !is.na(`Overall Score`), date == "2020-01-10" )
+
+base %>% 
+  select(country_name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, date) %>% 
+  filter(date == "2020-01-10") %>% 
+  filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
+         !is.na(`Overall Score`)) %>% 
+  ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`, Factor, y = `Overall Score`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(gen_names, `WJP Rule of Law Index: Overall Score`>0.82),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+rm(gen_names)
+
+overrallreg <- lm(`Overall Score` ~ `WJP Rule of Law Index: Overall Score` , data = base)
+overrallreg
+
+```
+7)Relação entre a variável 3.3 (Civil Participation) do WJP e o Democracy Index, da The Economist
+
+```{r}
+gen_names_2 <- base %>% 
+  filter(!is.na(`3.3 Civic participation`), 
+         !is.na(`Overall Score`), date == "2020-01-10" )
+
+base %>% 
+  select(country_name, iso_code, `3.3 Civic participation`, `Overall Score`, date) %>% 
+  filter(date == "2020-01-10") %>% 
+  filter(!is.na(`3.3 Civic participation`), 
+         !is.na(`Overall Score`)) %>% 
+  ggplot(mapping = aes(x = `3.3 Civic participation`, y = `Overall Score`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(gen_names_2, `3.3 Civic participation`>0.85),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+rm(gen_names_2)
+
+```
+
+9)Relação entre o fator 2 (Absence of Corruption) do WJP e o Democracy Index, da The Economist
+
+```{r}
+
+gen_names_3 <- base %>% 
+  filter(!is.na(`Factor 2: Absence of Corruption`), 
+         !is.na(`Overall Score`), date == "2020-01-10" )
+
+base %>% 
+  select(country_name, iso_code, `Factor 2: Absence of Corruption`, `Overall Score`, date) %>% 
+  filter(date == "2020-01-10") %>% 
+  filter(!is.na(`Factor 2: Absence of Corruption`), 
+         !is.na(`Overall Score`)) %>% 
+  ggplot(mapping = aes(x = `Factor 2: Absence of Corruption`, y = `Overall Score`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(gen_names_3, `Factor 2: Absence of Corruption`>0.85),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') 
+rm(gen_names_3)
+
+```
+
+10)Relação entre a média do Fator 6 e as taxas populacionais de falecimento e de casos totais por COVID-19
+
+```{r}
+
+gen_names_4 <- base %>% 
+  filter(!is.na(`Factor 6: Regulatory Enforcement`), !is.na(total_cases_per_million), 
+         !is.na(total_deaths_per_million), date == "2020-09-10" )
+
+base %>% 
+  select(country_name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, date) %>% 
+  filter(date == "2020-09-10") %>% 
+  filter(!is.na(`Factor 6: Regulatory Enforcement`), 
+         !is.na(total_cases_per_million)) %>% 
+  ggplot(mapping = aes(x = total_cases_per_million, y = `Factor 6: Regulatory Enforcement`)) +
+  geom_point() +
+  #geom_smooth(method = lm, se = FALSE) +
+  geom_label_repel(data = subset(gen_names_4, total_cases_per_million>15000),
+                   aes(label = country_name),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50') +
+  labs(title = "Regulatory enforcement and COVID-19 cases/million plot", 
+       subtitle = ("Mid September"))
+       
+rm(gen_names_4)
+
+```
+
+11)Relação entre o Fator 4 (Fundamental Rights) e a variável C6 (Stay at home requirements) do Oxford Response Tracker
+
+```{r}
+
+base %>% 
+  select(country_name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  filter(!is.na(`Factor 4: Fundamental Rights`), 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 2) %>% 
+  ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_point() 
+
+```
+
+11B)Relação animada conforme dias após o marco 1 morte por milhão
+
+```{r}
+p11 <- base %>% 
+  select(country_name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  filter(!is.na(`Factor 4: Fundamental Rights`), 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm)) %>% 
+  ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_point() 
+
+anim11 <- p11 + transition_time(days_after_1pm) +
+  labs(title = "Days after 1 death per million: {frame_time}")
+
+animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
+```
 
 
 
