@@ -113,7 +113,8 @@ iso <- iso_codes %>%
         mutate_if(is.character, str_replace_all, pattern = "Syrian Arab Republic", replacement = "Syria") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Congo, Democratic Republic of the", replacement = "Democratic Republic of Congo") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Korea \\(Democratic People's Republic of\\)", replacement = "North Korea")
-        
+        #Colocar a Costa do Marfim (Cotê D'ivoire) // 
+        #Bosnia // Congo // Suazilândia // Vietnam
 
 
 
@@ -323,7 +324,7 @@ base %>%
 # Mapa tipos democracia
 
 base %>% 
-  select(country_name, iso_code,type, date) %>% 
+  select(country_name, iso_code, type, date, `Overall Score`) %>% 
   filter(!is.na(type), date == Sys.Date() - 1) %>%
   clean_names() %>%  
   left_join(iso) %>% 
@@ -334,7 +335,7 @@ base %>%
    labs(title = "Types of Democracy",
         subtitle = ("Democracy Index 2019"),
         fill = "",
-        caption = "Source: Democracy Index") +
+        caption = "Source: Democracy Index, The Economist") +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
           legend.position = "right")
@@ -362,7 +363,7 @@ cpt %>%
   group_by(country_name, iso_code) %>%
   summarise(generalismo = mean((c1_flag + 
          c2_flag + c3_flag + c4_flag + c5_flag +
-         c6_flag + c7_flag + e1_flag + h1_flag))) %>% 
+         c6_flag + c7_flag + e1_flag + h1_flag)/8)) %>% 
   left_join(iso) %>% 
   left_join(world, by = c("iso2" = "iso_a2")) %>%  
   ggplot() +
@@ -390,7 +391,7 @@ base %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
-  scale_fill_gradient(low = "seagreen1", high = "tomato2", limits = c(1, 4), breaks = seq(1, 4, 1)) +
+  scale_fill_gradient(low = "seagreen1", high = "pink", limits = c(1, 4), breaks = seq(1, 4, 1)) +
    labs(title = "International Travel Controls",
         subtitle = ("In the beggining of September"),
         fill = "Index",
@@ -413,17 +414,19 @@ cpt %>%
   
 #Análise da relação entre E4 e C8 
   
-cpt %>% 
-  select(country_name, e4_international_support, c8_international_travel_controls) %>% 
+base %>% 
+  select(country_name, e4_international_support, c8_international_travel_controls, type) %>% 
   filter(!is.na(e4_international_support), 
          !is.na(c8_international_travel_controls)) %>% 
   group_by(country_name) %>% 
   summarise(media_log_suporte = log(mean(e4_international_support)),
-            media_controle = mean(c8_international_travel_controls)) %>% 
-  filter(media_log_suporte > 0) %>% 
-  ggplot(mapping = aes(x = media_log_suporte, y = media_controle)) +
+            media_controle = mean(c8_international_travel_controls), 
+            tipe = type) %>% 
+  filter(media_log_suporte > 0, !is.na(tipe)) %>% 
+  ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
     geom_point() +
-    geom_smooth(se = FALSE)
+    geom_smooth(method = lm, se = FALSE) +
+    theme_clean()
 
 #Análise H2 e H5
 
@@ -462,16 +465,17 @@ wjp_region <- wjptidy %>%
 3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
 ```{r}
 
-wjptidy %>% 
-  select(country_name, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
+base %>% 
+  select(country_name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.7),
+  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.8),
                    aes(label = country_name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
-                   segment.color = 'grey50') 
+                   segment.color = 'grey50') +
+  theme_clean()
 ```
 
 
@@ -483,7 +487,7 @@ wjptidy %>%
   select(country_name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
   geom_point() +
-  geom_smooth(method = lm, se = FALSE) +
+  geom_smooth(se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
                    aes(label = country_name),
                    box.padding   = 0.35, 
@@ -536,111 +540,7 @@ base %>%
 
 ```
 
-Análise descritiva da base World Justice Project 2019
 
-
-
-1) Agrupar de acordo com o grupo de renda e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre o nível de produto e a solidez institucional local
-```{r}
-
-wjp_income <- wjptidy %>% 
-  group_by(`Income Group`) %>% 
-  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
-
-```
-
-
-
-2)Agrupar de acordo com a região e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre a solidez institucional local e as regiões do mapa
-```{r}
-
-wjp_region <- wjptidy %>% 
-  group_by(Region) %>% 
-  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
-
-```
-
-
-
-3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
-```{r}
-
-wjptidy %>% 
-  select(country_name, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
-  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
-  geom_point() +
-  geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.7),
-                   aes(label = country_name),
-                   box.padding   = 0.35, 
-                   point.padding = 0.5,
-                   segment.color = 'grey50') 
-```
-
-
-
-4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o fator 2 (Absence of Corruption)
-```{r}
-
-wjptidy %>% 
-  select(country_name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
-  ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
-  geom_point() +
-  geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
-                   aes(label = country_name),
-                   box.padding   = 0.35, 
-                   point.padding = 0.5,
-                   segment.color = 'grey50') 
-
-```
-
-
-
-5) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
-```{r}
-
-wjptidy %>% 
-  select(country_name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
-  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
-  geom_point() +
-  geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.82),
-                   aes(label = country_name),
-                   box.padding   = 0.35, 
-                   point.padding = 0.5,
-                   segment.color = 'grey50') 
-
-```
-
-Entre as bases
-
-6) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
-```{r}
-
-gen_names <- base %>% 
-  filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
-         !is.na(`Overall Score`), date == "2020-01-10" )
-
-base %>% 
-  select(country_name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, date) %>% 
-  filter(date == "2020-01-10") %>% 
-  filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
-         !is.na(`Overall Score`)) %>% 
-  ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`, Factor, y = `Overall Score`)) +
-  geom_point() +
-  geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(gen_names, `WJP Rule of Law Index: Overall Score`>0.82),
-                   aes(label = country_name),
-                   box.padding   = 0.35, 
-                   point.padding = 0.5,
-                   segment.color = 'grey50') 
-rm(gen_names)
-
-overrallreg <- lm(`Overall Score` ~ `WJP Rule of Law Index: Overall Score` , data = base)
-overrallreg
-
-```
 7)Relação entre a variável 3.3 (Civil Participation) do WJP e o Democracy Index, da The Economist
 
 ```{r}
@@ -703,7 +603,7 @@ base %>%
   filter(date == "2020-09-10") %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), 
          !is.na(total_cases_per_million)) %>% 
-  ggplot(mapping = aes(x = total_cases_per_million, y = `Factor 6: Regulatory Enforcement`)) +
+  ggplot(mapping = aes(x = log(total_cases_per_million), y = `Factor 6: Regulatory Enforcement`)) +
   geom_point() +
   #geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(gen_names_4, total_cases_per_million>15000),
