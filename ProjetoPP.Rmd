@@ -289,7 +289,8 @@ p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill=type)) +
   ) +
   coord_polar() + 
   geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label=location, hjust=hjust), color = "black", fontface = "bold",alpha=0.6,
-            size=2.5, angle= label_data$angle, inherit.aes = FALSE )
+            size=2.5, angle= label_data$angle, inherit.aes = FALSE ) +
+  labs(title = "Democracy Index")
  
 p
 
@@ -307,12 +308,14 @@ base %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = overall_score)) +
-   scale_fill_gradient(low = "#FFFFFF", high = "#0087C0", limits = c(1, 10), breaks = seq(1, 10, 1)) +
+   scale_fill_gradient(low = "#ff726f", high = "#0087C0", limits = c(1, 10), breaks = seq(1, 10, 1)) +
    labs(title = "Overall Score in the Democracy Index",
-        subtitle = ("values for 2019"),
-        fill = "",
-        caption = "Source: Democracy Index") +
-   theme_map()
+        subtitle = ("Values for 2019"),
+        fill = "Index",
+        caption = "Source: Democracy Index, The Economist") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+            legend.position = "right")
 
 
 # Mapa tipos democracia
@@ -330,7 +333,9 @@ base %>%
         subtitle = ("Democracy Index 2019"),
         fill = "",
         caption = "Source: Democracy Index") +
-   theme_map()
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+          legend.position = "right")
 
 
 ```
@@ -346,26 +351,51 @@ skim(cpt)
 cpt %>% 
   select(country_name, c1_flag, 
          c2_flag, c3_flag, c4_flag, c5_flag,
-         c6_flag, c7_flag, e1_flag, h1_flag) %>% 
+         c6_flag, c7_flag, e1_flag, h1_flag, iso_code) %>% 
   filter(!is.na(c1_flag), 
          !is.na(c2_flag), !is.na(c3_flag), 
          !is.na(c4_flag), !is.na(c5_flag),
          !is.na(c6_flag), !is.na(c7_flag), 
          !is.na(e1_flag), !is.na(h1_flag)) %>% 
-  group_by(country_name) %>% 
+  group_by(country_name, iso_code) %>%
   summarise(generalismo = mean((c1_flag + 
          c2_flag + c3_flag + c4_flag + c5_flag +
-         c6_flag + c7_flag + e1_flag + h1_flag)/8)) 
-  #Fazer mapa com isso, para ver o nível de generalismo das políticas ao redor do mund
+         c6_flag + c7_flag + e1_flag + h1_flag))) %>% 
+  left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>%  
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = generalismo)) +
+  scale_fill_gradient(low = "darkslateblue", high = "seagreen3") +
+   labs(title = "Level of Political Generalism",
+        subtitle = ("Related to Pandemic Policies"),
+        fill = "Index",
+        caption = "Source: Oxford Policy Tracker") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5d0"),
+          legend.position = "right")
 
 
 
 #Análise da variável C8 (International Travel Controls)
 
-cpt %>% 
-  select(country_name, c8_international_travel_controls, date) %>% 
-  filter(!is.na(c8_international_travel_controls))
-  #Fazer um gráfico, em mapa, dos travel controls ao longo do tempo
+base %>% 
+  select(country_name, c8_international_travel_controls, date, iso_code) %>% 
+  filter(!is.na(c8_international_travel_controls), date == Sys.Date() - 30) %>%
+  clean_names() %>%
+  left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
+  scale_fill_gradient(low = "seagreen1", high = "tomato2", limits = c(1, 4), breaks = seq(1, 4, 1)) +
+   labs(title = "International Travel Controls",
+        subtitle = ("In the beggining of September"),
+        fill = "Index",
+        caption = "Source: Oxford Policy Tracke") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+          legend.position = "right")
 
 #Análise da relação entre C5 e E1
 
