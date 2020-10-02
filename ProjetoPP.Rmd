@@ -259,8 +259,6 @@ dmi %>%
   theme_clean()
 
 
-
-
 # Barplot em circulo
 
 empty_bar <- 4
