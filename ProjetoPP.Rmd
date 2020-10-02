@@ -23,7 +23,6 @@ library(ggthemes)
 library(spData)
 library(ggrepel)
 library(sf)
-library(reshape2)
 
 
 ```
@@ -259,13 +258,47 @@ dmi %>%
   coord_flip() +
   theme_clean()
 
-#Arrumar os gráficos + Extender a análise
 
 
-base %>% 
-  select(country_name, iso_code, `Overall Score`, date) %>% view()
-  filter(!is.na(`Overall Score`), date == Sys.Date() - 1) 
 
+# Barplot em circulo
+
+empty_bar <- 4
+to_add <- data.frame(matrix(NA, empty_bar*nlevels(dmi$type), ncol(dmi)) )
+colnames(to_add) <- colnames(dmi)
+to_add$group <- rep(levels(dmi$type), each=empty_bar)
+dmi <- rbind(dmi, to_add)
+dmi <- dmi %>% arrange(group)
+dmi$id <- seq(1, nrow(dmi))
+ 
+
+label_data <- dmi
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     
+label_data$hjust <- ifelse(angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle + 180, angle)
+ 
+
+p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill=type)) +       
+  geom_bar(stat = "identity", alpha=0.5) +
+  ylim(-50, 11) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-2,4), "cm") 
+  ) +
+  coord_polar() + 
+  geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label=location, hjust=hjust), color = "black", fontface = "bold",alpha=0.6,
+            size=2.5, angle= label_data$angle, inherit.aes = FALSE )
+ 
+p
+
+
+
+
+# Mapa Overall Score
 
 base %>% 
   select(country_name, iso_code, `Overall Score`, date) %>% 
@@ -276,13 +309,30 @@ base %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = overall_score)) +
-   scale_fill_gradient(low = "#FBC5D0", high = "#BE0E34", limits = c(1, 10), breaks = seq(1, 10, 1)) +
+   scale_fill_gradient(low = "#FFFFFF", high = "#0087C0", limits = c(1, 10), breaks = seq(1, 10, 1)) +
    labs(title = "Overall Score in the Democracy Index",
         subtitle = ("values for 2019"),
         fill = "",
         caption = "Source: Democracy Index") +
    theme_map()
 
+
+# Mapa tipos democracia
+
+base %>% 
+  select(country_name, iso_code,type, date) %>% 
+  filter(!is.na(type), date == Sys.Date() - 1) %>%
+  clean_names() %>%  
+  left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = type.x)) +
+   labs(title = "Types of Democracy",
+        subtitle = ("Democracy Index 2019"),
+        fill = "",
+        caption = "Source: Democracy Index") +
+   theme_map()
 
 
 ```
