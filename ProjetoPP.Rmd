@@ -22,6 +22,9 @@ library(lubridate)
 library(ggthemes)
 library(spData)
 library(ggrepel)
+library(sf)
+library(reshape2)
+
 
 ```
 
@@ -49,6 +52,14 @@ democracy <- read_excel("EIU-Democracy Indices - Dataset - v3.xlsx",
 
 giniOWID <- read_csv("economic-inequality-gini-index.csv")
 
+iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv") %>% 
+   transmute(code = as.numeric(`country-code`),
+             name,
+             iso_code = `alpha-3`,
+             region,
+             iso2 = `alpha-2`) %>% 
+  clean_names()
+
 ```
 
 
@@ -70,10 +81,46 @@ skim(democracy)
 
 colnames(democracy)[1] <- "location"
 
+
+democracy %>% 
+        filter(!is.na(location)) %>% 
+        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
+        mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        anti_join(iso, by = c("location" = "name")) %>% view
+        
+
+
+
+
+
+iso <- iso_codes %>% 
+        mutate_if(is.character, str_replace_all,
+                  pattern = "United Kingdom of Great Britain and Northern Ireland", replacement = "United Kingdom") %>%
+        mutate_if(is.character, str_replace_all, pattern = "Korea, Republic of", replacement = "South Korea") %>%
+        mutate_if(is.character, str_replace_all, pattern = "Taiwan, Province of China", replacement = "Taiwan") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Czechia", replacement = "Czech Republic") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Moldova.*", replacement = "Moldova") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Tanzania, United Republic of", replacement = "Tanzania") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Kyrgyzstan", replacement = "Kyrgyz Republic") %>%
+        mutate_if(is.character, str_replace_all, pattern = "Bolivia.*", replacement = "Bolivia") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Palestine, State of", replacement = "Palestine") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Congo, Democratic Republic of the", replacement = "Congo (Brazzaville)") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Russian Federation", replacement = "Russia") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Venezuela \\(Bolivarian Republic of\\)", replacement = "Venezuela") %>%
+        mutate_if(is.character, str_replace_all, pattern = "Iran \\(Islamic Republic of\\)", replacement = "Iran") %>%
+        mutate_if(is.character, str_replace_all, pattern = "Lao People's Democratic Republic", replacement = "Laos") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Syrian Arab Republic", replacement = "Syria") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Congo, Democratic Republic of the", replacement = "Democratic Republic of Congo") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Korea \\(Democratic People's Republic of\\)", replacement = "North Korea")
+        
+
+
+
 dmi <- democracy %>% 
         filter(!is.na(location)) %>% 
         mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
         mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        left_join(iso, by = c("location" = "name")) %>% 
         mutate(location = str_remove(location, "of America")) %>% 
         mutate(Rank = as.integer(Rank)) %>% 
         mutate(type = case_when(
@@ -81,7 +128,7 @@ dmi <- democracy %>%
                       Rank >= 23 & Rank <= 75 ~ "Flawed democracy",
                       Rank >= 77 & Rank <= 113 ~ "Hybrid regime",
                       Rank >= 114 ~ "Authoritarian regime"))
-        
+
 # Limpando a base World Justice Project (Instituições)
 
 wjptidy <- wjp_2019 %>% 
@@ -147,7 +194,7 @@ wjp_cpt <- left_join(cpt, wjptidy, by = ("iso_code")) %>%
 # Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
 junto <- covid %>% 
-  left_join(dmi) %>%  
+  left_join(select(dmi, -location), by = "iso_code") %>% 
   left_join(t, by = c("location" = "country", "date" = "date")) %>% 
   select(-(new_tests:tests_units), -("ISO code")) %>% 
   filter(!is.na(type))
@@ -163,8 +210,6 @@ base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "da
 
 base_inter <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code")) %>% 
   select(!(m1_wildcard))
-
-
 ```
 
 
@@ -216,6 +261,30 @@ dmi %>%
 
 #Arrumar os gráficos + Extender a análise
 
+
+base %>% 
+  select(country_name, iso_code, `Overall Score`, date) %>% view()
+  filter(!is.na(`Overall Score`), date == Sys.Date() - 1) 
+
+
+base %>% 
+  select(country_name, iso_code, `Overall Score`, date) %>% 
+  filter(!is.na(`Overall Score`), date == Sys.Date() - 1) %>%
+  clean_names() %>%  
+  left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = overall_score)) +
+   scale_fill_gradient(low = "#FBC5D0", high = "#BE0E34", limits = c(1, 10), breaks = seq(1, 10, 1)) +
+   labs(title = "Overall Score in the Democracy Index",
+        subtitle = ("values for 2019"),
+        fill = "",
+        caption = "Source: Democracy Index") +
+   theme_map()
+
+
+
 ```
 
 
@@ -239,7 +308,9 @@ cpt %>%
   summarise(generalismo = mean((c1_flag + 
          c2_flag + c3_flag + c4_flag + c5_flag +
          c6_flag + c7_flag + e1_flag + h1_flag)/8)) 
-  #Fazer mapa com isso, para ver o nível de generalismo das políticas ao redor do mundo
+  #Fazer mapa com isso, para ver o nível de generalismo das políticas ao redor do mund
+
+
 
 #Análise da variável C8 (International Travel Controls)
 
@@ -279,6 +350,9 @@ cpt %>%
 
 
 ```
+
+
+
 Análise descritiva da base World Justice Project 2019
 
 
@@ -292,8 +366,9 @@ wjp_income <- wjptidy %>%
 
 ```
 
-2)Agrupar de acordo com a região e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre a solidez institucional local e as regiões do mapa
 
+
+2)Agrupar de acordo com a região e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre a solidez institucional local e as regiões do mapa
 ```{r}
 
 wjp_region <- wjptidy %>% 
@@ -302,8 +377,9 @@ wjp_region <- wjptidy %>%
 
 ```
 
-3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
 
+
+3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
 ```{r}
 
 wjptidy %>% 
@@ -318,6 +394,9 @@ wjptidy %>%
                    point.padding = 0.5,
                    segment.color = 'grey50') 
 ```
+
+
+
 4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o fator 2 (Absence of Corruption)
 ```{r}
 
@@ -335,8 +414,9 @@ wjptidy %>%
 
 ```
 
-5) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
 
+
+5) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
 ```{r}
 
 wjptidy %>% 
@@ -352,11 +432,10 @@ wjptidy %>%
                    segment.color = 'grey50') 
 
 ```
+
 Entre as bases
 
-
 6) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
-
 ```{r}
 
 x <- base %>% 
