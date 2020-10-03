@@ -10,7 +10,7 @@ editor_options:
 
 Pacotes
 ```{r}
-
+library(estimatr)
 library(janitor)
 library(vctrs)
 library(tidyverse)
@@ -25,7 +25,7 @@ library(ggrepel)
 library(sf)
 library(gganimate)
 library(av)
-
+library(broom)
 
 ```
 
@@ -225,13 +225,19 @@ marcador <- base_inter %>%
   group_by(country_name) %>% 
   mutate(rank = min_rank(total_cases_per_million)) %>% 
   mutate(days_after_1pm = rank(rank, ties.method = "first")) %>% 
-  relocate(days_after_1pm, .after = date) 
+  relocate(days_after_1pm, .after = date) %>% 
+  ungroup()
+
+#Alternativa
+#group_by(country_name) %>%
+#arrange(date) %>%
+#mutate(rank = row_number()) %>% 
+#ungroup()
 
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
 
 rm(uk, us, base_semi, base_inter, marcador)
-
 
 ```
 
@@ -378,7 +384,7 @@ cpt %>%
     theme(panel.background = element_rect(fill = "#b3d5d0"),
           legend.position = "right")
 
-
+#REVISAR CONTAS
 
 #Análise da variável C8 (International Travel Controls)
 
@@ -391,11 +397,11 @@ base %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
-  scale_fill_gradient(low = "seagreen1", high = "pink", limits = c(1, 4), breaks = seq(1, 4, 1)) +
+  scale_fill_gradient(low = "seagreen1", high = "deeppink3", limits = c(1, 4), breaks = seq(1, 4, 1)) +
    labs(title = "International Travel Controls",
         subtitle = ("In the beggining of September"),
         fill = "Index",
-        caption = "Source: Oxford Policy Tracke") +
+        caption = "Source: Oxford Policy Tracker") +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
           legend.position = "right")
@@ -466,16 +472,26 @@ wjp_region <- wjptidy %>%
 ```{r}
 
 base %>% 
-  select(country_name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>% 
+  select(country_name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>%
+  filter(!is.na(type)) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
-  geom_point() +
+  geom_point(mapping = aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.8),
+  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement` > 0.8),
                    aes(label = country_name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   theme_clean()
+
+base %>% 
+  select(country_name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>%
+  filter(!is.na(type)) %>%
+  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
+  geom_point(mapping = aes(color = type)) +
+  geom_smooth(method = lm, se = FALSE) +
+  theme_clean()
+
 ```
 
 
@@ -598,12 +614,13 @@ gen_names_4 <- base %>%
   filter(!is.na(`Factor 6: Regulatory Enforcement`), !is.na(total_cases_per_million), 
          !is.na(total_deaths_per_million), date == "2020-09-10" )
 
+#Usar datas comparáveis (days_after_1pm)
 base %>% 
-  select(country_name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, date) %>% 
-  filter(date == "2020-09-10") %>% 
+  select(country_name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
+  filter(days_after_1pm == 100) %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), 
          !is.na(total_cases_per_million)) %>% 
-  ggplot(mapping = aes(x = log(total_cases_per_million), y = `Factor 6: Regulatory Enforcement`)) +
+  ggplot(mapping = aes(y = log(total_cases_per_million), x = `Factor 6: Regulatory Enforcement`)) +
   geom_point() +
   #geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(gen_names_4, total_cases_per_million>15000),
@@ -639,15 +656,36 @@ p11 <- base %>%
   filter(!is.na(`Factor 4: Fundamental Rights`), 
          !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm)) %>% 
   ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
-  geom_point() 
+  geom_point(alpha = 0.5) +
+  theme_clean()
 
 anim11 <- p11 + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}")
 
-animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
+animate(anim11, renderer = av_renderer("gifregulatory.gif"))
 ```
 
 
+B) Testes de Regressão
+```{r}
+b <- base %>% 
+  filter(days_after_1pm > 0) 
+
+reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
+
+summary(reg)
+
+
+reg1 <- lm_robust(total_cases_per_million ~ ., data = subset(b, select=c(-country_name, -iso_code, -date, -iso2, -confirmed_cases, -total_cases, -new_cases, -total_deaths, -new_deaths, -new_cases_per_million, -confirmed_deaths, -total_deaths_per_million, -`Short-term tests per case`, -`Short-term positive rate`,-`Cumulative total`, -`Cumulative total per thousand`, -`7-day smoothed daily change`, -`7-day smoothed daily change per thousand`, -`Daily change in cumulative total per thousand`, -new_deaths_smoothed_per_million, -new_deaths_per_million, -new_cases_smoothed_per_million, -new_deaths_smoothed, -new_cases_smoothed, -`Daily change in cumulative total`)))
+           
+tidy(reg1) %>% 
+  filter(p.value < 0.05)
+
+summary(reg1)
+
+# Pesquisar sobre PCA (Principal Component Analysis) -> BEM LEGAL
+
+```
 
 
 
