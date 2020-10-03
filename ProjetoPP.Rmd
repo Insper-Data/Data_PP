@@ -219,7 +219,7 @@ base_inter <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "enti
 
 Criando variável que conta quantos dias passaram desde que o país atingiu 1 caso por milhão de habitantes
 ```{r}
-#Mudar para 150/200
+#Mesmo threshold do Our World In Data
 
 marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
