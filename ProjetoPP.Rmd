@@ -219,6 +219,7 @@ base_inter <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "enti
 
 Criando variável que conta quantos dias passaram desde que o país atingiu 1 caso por milhão de habitantes
 ```{r}
+#Mudar para 150/200
 
 marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
@@ -233,6 +234,8 @@ marcador <- base_inter %>%
 #arrange(date) %>%
 #mutate(rank = row_number()) %>% 
 #ungroup()
+
+#fazer uma análise da distribuição dos dias (o último valor para cada país), para ver como está a situação atual
 
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
