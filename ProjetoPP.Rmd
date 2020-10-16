@@ -387,7 +387,6 @@ cpt %>%
     theme(panel.background = element_rect(fill = "#b3d5d0"),
           legend.position = "right")
 
-#REVISAR CONTAS
 
 #Análise da variável C8 (International Travel Controls)
 
