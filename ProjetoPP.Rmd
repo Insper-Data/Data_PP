@@ -10,6 +10,7 @@ editor_options:
 
 Pacotes
 ```{r}
+
 library(estimatr)
 library(janitor)
 library(vctrs)
@@ -90,9 +91,7 @@ democracy %>%
         anti_join(iso, by = c("location" = "name")) %>% view
         
 
-
-
-
+rm(iso)
 
 iso <- iso_codes %>% 
         mutate_if(is.character, str_replace_all,
@@ -105,17 +104,18 @@ iso <- iso_codes %>%
         mutate_if(is.character, str_replace_all, pattern = "Kyrgyzstan", replacement = "Kyrgyz Republic") %>%
         mutate_if(is.character, str_replace_all, pattern = "Bolivia.*", replacement = "Bolivia") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Palestine, State of", replacement = "Palestine") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Congo, Democratic Republic of the", replacement = "Congo (Brazzaville)") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Congo(?!,)", replacement = "Congo (Brazzaville)") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Russian Federation", replacement = "Russia") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Venezuela \\(Bolivarian Republic of\\)", replacement = "Venezuela") %>%
         mutate_if(is.character, str_replace_all, pattern = "Iran \\(Islamic Republic of\\)", replacement = "Iran") %>%
         mutate_if(is.character, str_replace_all, pattern = "Lao People's Democratic Republic", replacement = "Laos") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Syrian Arab Republic", replacement = "Syria") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Congo, Democratic Republic of the", replacement = "Democratic Republic of Congo") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Korea \\(Democratic People's Republic of\\)", replacement = "North Korea")
-        #Colocar a Costa do Marfim (Cotê D'ivoire) // 
-        #Bosnia // Congo // Suazilândia // Vietnam
-
+        mutate_if(is.character, str_replace_all, pattern = "Korea \\(Democratic People's Republic of\\)", replacement = "North Korea") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Bosnia and Herzegovina", replacement = "Bosnia and Hercegovina") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Côte d'Ivoire", replacement = "Côte d’Ivoire") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Viet Nam", replacement = "Vietnam") %>% 
+        mutate_if(is.character, str_replace_all, pattern = "Eswatini", replacement = "eSwatini")
 
 
 dmi <- democracy %>% 
@@ -181,8 +181,82 @@ giniOWIDlatest <- giniOWID %>%
   clean_names()
 
 
+
 ```
 
+
+Criando dicionario
+```{r}
+
+x <- cpt %>% 
+  select(country_name, iso_code) %>% 
+  unique()
+  
+###
+
+y <- wjptidy %>% 
+  select(country_name, iso_code)
+
+x %>% anti_join(y, by = "iso_code") %>% view()
+
+###
+
+z <- covid %>% 
+  select(location, iso_code) %>% 
+  unique() %>% 
+  clean_names()
+
+z %>% anti_join(y, by = "iso_code") %>% view()
+
+
+###
+
+w <- t %>% 
+  select(country, `ISO code`) %>% 
+  unique() %>% 
+  rename("iso_code" = "ISO code")
+
+###
+
+y %>% anti_join(w, by = "iso_code") %>% view()
+
+v <- giniOWIDlatest %>% 
+  select(entity, code) %>% 
+  rename("iso_code" = "code")
+
+v %>% anti_join(w, by = "iso_code") %>% view()
+
+
+###
+
+u <- dmi %>% 
+  select(location, iso_code)
+
+u %>% anti_join(w, by = "iso_code") %>% view()
+
+
+#### Juntando as bases ####
+
+rm(dici)
+
+dici <- iso_codes %>% 
+        left_join(z, by = "iso_code") %>% 
+        left_join(x, by = "iso_code") %>%
+        left_join(u, by = "iso_code") %>%
+        left_join(v, by = "iso_code") %>%
+        left_join(y, by = "iso_code") %>%
+        left_join(w, by = "iso_code") %>% 
+        rename("names_covid" = "location.x") %>% 
+        rename("names_cpt" = "country_name.x") %>% 
+        rename("names_dmi" = "location.y") %>% 
+        rename("names_wjp" = "entity") %>% 
+        rename("names_tests" = "country_name.y")
+
+
+
+
+
+```
 
 
 Juntando as bases
