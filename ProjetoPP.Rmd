@@ -75,7 +75,8 @@ Limpando as bases
 t <- tests %>% 
   select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
-  rename(date = Date)
+  rename(date = Date) %>% 
+  rename("iso_code" = "ISO code")
  
 # Limpando a base Democracy Index (democracy)
 
@@ -177,8 +178,9 @@ cpt <- cpt %>%
 giniOWIDlatest <- giniOWID %>% 
   group_by(Entity) %>% 
   filter(Year == max(Year)) %>% 
-  rename(YearGINdata = Year) %>% 
-  clean_names()
+  rename(YearGINdata = Year) %>%
+  clean_names() %>% 
+  rename("iso_code" = "code")
 
 
 
@@ -213,8 +215,7 @@ z %>% anti_join(y, by = "iso_code") %>% view()
 
 w <- t %>% 
   select(country, `ISO code`) %>% 
-  unique() %>% 
-  rename("iso_code" = "ISO code")
+  unique()
 
 ###
 
@@ -235,7 +236,7 @@ u <- dmi %>%
 u %>% anti_join(w, by = "iso_code") %>% view()
 
 
-#### Juntando as bases ####
+#### Criando o dicionario ####
 
 rm(dici)
 
@@ -249,12 +250,41 @@ dici <- iso_codes %>%
         rename("names_covid" = "location.x") %>% 
         rename("names_cpt" = "country_name.x") %>% 
         rename("names_dmi" = "location.y") %>% 
-        rename("names_wjp" = "entity") %>% 
-        rename("names_tests" = "country_name.y")
+        rename("names_gini" = "entity") %>% 
+        rename("names_wjp" = "country_name.y") %>% 
+        rename("names_tests" = "country")
 
 
+###
+
+covid <- dici %>% 
+  select(name:names_covid) %>% 
+  right_join(covid, by = "iso_code") %>% 
+  select(-continent, -location)
 
 
+wjptidy <- dici %>% 
+  select(name:iso2, names_wjp) %>% 
+  right_join(wjptidy, by = "iso_code") %>% 
+  select(-country_name)
+
+
+cpt <- dici %>% 
+  select(name:iso2, names_cpt) %>% 
+  right_join(cpt, by = "iso_code") %>% 
+  select(-country_name)
+
+
+t <- dici %>% 
+  select(name:iso2, names_tests) %>% 
+  right_join(t, by = "iso_code") %>% 
+  select(-country)
+
+
+giniOWIDlatest <- dici %>% 
+  select(name:iso2, names_gini) %>% 
+  right_join(giniOWIDlatest, by = "iso_code") %>% 
+  select(-entity)
 
 ```
 
