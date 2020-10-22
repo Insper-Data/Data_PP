@@ -37,7 +37,8 @@ Puxando as bases
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo")) %>% 
-  filter(date > "2019-12-31")
+  filter(date > "2019-12-31") %>% 
+  select(-stringency_index)
 
 
 tests <- read_csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv")
@@ -88,17 +89,6 @@ df2 <- t %>%
     filter(country %in% c("United States", "Japan") & escala == "tests performed")
   
 
-
-    # filter(country == "United States" & escala != "tests performed") %>% 
-    # filter(country == "Singapore" & escala != "people tested") %>%
-    # filter(country == "Poland" & escala != "people tested") %>%
-    # filter(country == "Japan" & escala != "tests performed") %>%
-    # filter(country == "Italy" & escala != "people tested") %>%
-    # filter(country == "India" & escala != "people tested") %>%
-    # filter(country == "France" & escala != "people tested")
-
-
-
 t <- t %>% 
     anti_join(df1) %>% 
     anti_join(df2)
@@ -106,8 +96,6 @@ t <- t %>%
 
 
 # Limpando a base Democracy Index (democracy)
-
-skim(democracy)
 
 colnames(democracy)[1] <- "location"
 
@@ -118,8 +106,6 @@ democracy %>%
         mutate(Rank = str_remove(Rank, "[=]$")) %>%
         anti_join(iso, by = c("location" = "name"))
         
-
-rm(iso)
 
 iso <- iso_codes %>% 
         mutate_if(is.character, str_replace_all,
@@ -330,8 +316,6 @@ wjp_cpt <- left_join(cpt, wjptidy, by = c("iso_code", "name", "region", "iso2"))
 
 # Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
-rm(junto)
-
 junto <- covid %>% 
   left_join(dmi, by = c("iso_code", "region", "iso2", "name")) %>% 
   left_join(t, by = c("iso_code", "region", "iso2", "date", "name"))
@@ -341,8 +325,6 @@ junto <- covid %>%
 
 
 # Juntando tudo
-
-rm(base_semi)
 
 base_semi <- left_join(junto, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
 
@@ -355,6 +337,8 @@ base_semi %>% count(name) %>% view
 
 base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", "iso2", "name")) %>% 
   select(!(m1_wildcard))
+
+
 ```
 
 
@@ -391,24 +375,26 @@ rm(base_semi, base_inter, marcador, u, v, w, x, y, z, wjp_2019, giniOWID, iso, d
 Análise descritiva - Democracy Index
 
 ```{r}
+
+
 skim(dmi)
 
 dmi %>%
-  ggplot(aes(x = reorder(location, -`Overall Score`), `Overall Score`, fill = type)) + 
+  ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
   coord_flip() +
   theme_clean()
 
 dmi %>%
   filter(`Overall Score` > 6) %>% 
-  ggplot(aes(x = reorder(location, -`Overall Score`), `Overall Score`, fill = type)) + 
+  ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
   coord_flip() +
   theme_clean()
 
 dmi %>%
   filter(`Overall Score` < 6) %>% 
-  ggplot(aes(x = reorder(location, -`Overall Score`), `Overall Score`, fill = type)) + 
+  ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
   coord_flip() +
   theme_clean()
@@ -432,7 +418,7 @@ label_data$hjust <- ifelse(angle < -90, 1, 0)
 label_data$angle <- ifelse(angle < -90, angle + 180, angle)
  
 
-p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill=type)) +       
+p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill = type)) +       
   geom_bar(stat = "identity", alpha=0.5) +
   ylim(-50, 11) +
   theme_minimal() +
@@ -443,8 +429,8 @@ p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill=type)) +
     plot.margin = unit(rep(-2,4), "cm") 
   ) +
   coord_polar() + 
-  geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label=location, hjust=hjust), color = "black", fontface = "bold",alpha=0.6,
-            size=2.5, angle= label_data$angle, inherit.aes = FALSE ) +
+  geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label = name, hjust = hjust), color = "black", fontface = "bold",alpha=0.6,
+            size = 2.5, angle = label_data$angle, inherit.aes = FALSE ) +
   labs(title = "Democracy Index")
  
 p
@@ -455,10 +441,10 @@ p
 # Mapa Overall Score
 
 base %>% 
-  select(country_name, iso_code, `Overall Score`, date) %>% 
+  select(name, iso_code, `Overall Score`, date) %>% 
   filter(!is.na(`Overall Score`), date == Sys.Date() - 1) %>%
   clean_names() %>%  
-  left_join(iso) %>% 
+  #left_join(iso) %>% 
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
@@ -476,7 +462,7 @@ base %>%
 # Mapa tipos democracia
 
 base %>% 
-  select(country_name, iso_code, type, date, `Overall Score`) %>% 
+  select(name, iso_code, type, date, `Overall Score`) %>% 
   filter(!is.na(type), date == Sys.Date() - 1) %>%
   clean_names() %>%  
   left_join(iso) %>% 
@@ -499,12 +485,14 @@ base %>%
 Análise descritiva - Oxford Covid-19 Government Response Tracker
 
 ```{r}
+
+
 skim(cpt)
 
 #Análise das variáveis "flag", que indicam se as políticas foram específicas ou gerais.
 
 cpt %>% 
-  select(country_name, c1_flag, 
+  select(name, c1_flag, 
          c2_flag, c3_flag, c4_flag, c5_flag,
          c6_flag, c7_flag, e1_flag, h1_flag, iso_code) %>% 
   filter(!is.na(c1_flag), 
@@ -797,11 +785,11 @@ base %>%
 
 ```{r}
 p11 <- base %>% 
-  select(country_name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
          !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm)) %>% 
   ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
-  geom_point(alpha = 0.5) +
+  geom_point() +
   theme_clean()
 
 anim11 <- p11 + transition_time(days_after_1pm) +
