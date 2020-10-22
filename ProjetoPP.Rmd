@@ -35,7 +35,9 @@ library(broom)
 Puxando as bases
 ```{r}
 
-covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
+covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
+  filter(!location %in% c("International", "World","Kosovo")) %>% 
+  filter(date > "2019-12-31")
 
 
 tests <- read_csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv")
@@ -76,8 +78,33 @@ t <- tests %>%
   select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
   rename(date = Date) %>% 
-  rename("iso_code" = "ISO code")
- 
+  rename("iso_code" = "ISO code") 
+
+df1 <- t %>% 
+    filter(country %in% c("Singapore", "Poland", "Italy", "India", "France") & escala !=  "people tested")
+
+
+df2 <- t %>%
+    filter(country %in% c("United States", "Japan") & escala == "tests performed")
+  
+
+
+    # filter(country == "United States" & escala != "tests performed") %>% 
+    # filter(country == "Singapore" & escala != "people tested") %>%
+    # filter(country == "Poland" & escala != "people tested") %>%
+    # filter(country == "Japan" & escala != "tests performed") %>%
+    # filter(country == "Italy" & escala != "people tested") %>%
+    # filter(country == "India" & escala != "people tested") %>%
+    # filter(country == "France" & escala != "people tested")
+
+
+
+t <- t %>% 
+    anti_join(df1) %>% 
+    anti_join(df2)
+
+
+
 # Limpando a base Democracy Index (democracy)
 
 skim(democracy)
@@ -89,7 +116,7 @@ democracy %>%
         filter(!is.na(location)) %>% 
         mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
         mutate(Rank = str_remove(Rank, "[=]$")) %>%
-        anti_join(iso, by = c("location" = "name")) %>% view
+        anti_join(iso, by = c("location" = "name"))
         
 
 rm(iso)
@@ -155,7 +182,9 @@ cpt <- CRT %>%
   mutate(date = ymd(date)) %>% 
   rename(c("iso_code" = "country_code")) %>% 
   select(- c(region_name, region_code)) %>% 
-  relocate(confirmed_cases, .after = country_name)
+  relocate(confirmed_cases, .after = country_name) %>% 
+  filter(iso_code != "RKS") # tiramos o Kosovo pois ele não está nas outra bases e complicaria a análise. 
+                            #Acreditamos que ele tenha pouca representatividade
   
 
 us <- cpt %>% 
@@ -199,7 +228,7 @@ x <- cpt %>%
 y <- wjptidy %>% 
   select(country_name, iso_code)
 
-x %>% anti_join(y, by = "iso_code") %>% view()
+x %>% anti_join(y, by = "iso_code") 
 
 ###
 
@@ -208,24 +237,22 @@ z <- covid %>%
   unique() %>% 
   clean_names()
 
-z %>% anti_join(y, by = "iso_code") %>% view()
+z %>% anti_join(y, by = "iso_code") 
 
 
 ###
 
 w <- t %>% 
-  select(country, `ISO code`) %>% 
+  select(country, iso_code) %>% 
   unique()
 
 ###
 
-y %>% anti_join(w, by = "iso_code") %>% view()
-
+y %>% anti_join(w, by = "iso_code") 
 v <- giniOWIDlatest %>% 
-  select(entity, code) %>% 
-  rename("iso_code" = "code")
+  select(entity, iso_code)
 
-v %>% anti_join(w, by = "iso_code") %>% view()
+v %>% anti_join(w, by = "iso_code") 
 
 
 ###
@@ -233,12 +260,11 @@ v %>% anti_join(w, by = "iso_code") %>% view()
 u <- dmi %>% 
   select(location, iso_code)
 
-u %>% anti_join(w, by = "iso_code") %>% view()
+u %>% anti_join(w, by = "iso_code") 
 
 
 #### Criando o dicionario ####
 
-rm(dici)
 
 dici <- iso_codes %>% 
         left_join(z, by = "iso_code") %>% 
@@ -286,6 +312,10 @@ giniOWIDlatest <- dici %>%
   right_join(giniOWIDlatest, by = "iso_code") %>% 
   select(-entity)
 
+dmi <- dici %>% 
+  select(name:iso_code) %>% 
+  right_join(dmi, by = "iso_code")
+
 ```
 
 
@@ -293,28 +323,37 @@ Juntando as bases
 ```{r}
 # Unificação do World Justice com CPT
 
-wjp_cpt <- left_join(cpt, wjptidy, by = ("iso_code")) %>% 
-            select(-country_name.y) %>% 
-            rename(country_name = country_name.x)
+
+wjp_cpt <- left_join(cpt, wjptidy, by = c("iso_code", "name", "region", "iso2"))
+
+# wjp_cpt %>% filter(is.na(name)) %>% view #### Kosovo não aparece pq não está em nenhuma base alem do CRT
 
 # Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
 
+rm(junto)
+
 junto <- covid %>% 
-  left_join(select(dmi, -location), by = "iso_code") %>% 
-  left_join(t, by = c("location" = "country", "date" = "date")) %>% 
-  select(-(new_tests:tests_units), -("ISO code")) %>% 
-  filter(!is.na(type))
+  left_join(dmi, by = c("iso_code", "region", "iso2", "name")) %>% 
+  left_join(t, by = c("iso_code", "region", "iso2", "date", "name"))
+
+
+# junto %>% filter(is.na(name)) %>% view ### tiramos o Kosovo 
 
 
 # Juntando tudo
 
-base_semi <- left_join(wjp_cpt, junto,  by = c("country_name" = "location" , "date" = "date", "iso_code" =  "iso_code")) %>% 
-  select(-Year)
+rm(base_semi)
 
+base_semi <- left_join(junto, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
+
+
+base_semi %>% count(name) %>% view
+
+## anti_join(junto, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### excluimos o dia 31/12/2019
 
 #Juntando com Gini
 
-base_inter <- left_join(base_semi, giniOWIDlatest, by = c("country_name" = "entity", "iso_code" = "code")) %>% 
+base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", "iso2", "name")) %>% 
   select(!(m1_wildcard))
 ```
 
@@ -327,7 +366,7 @@ Criando variável que conta quantos dias passaram desde que o país atingiu 1 ca
 
 marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
-  group_by(country_name) %>% 
+  group_by(name) %>% 
   mutate(rank = min_rank(total_cases_per_million)) %>% 
   mutate(days_after_1pm = rank(rank, ties.method = "first")) %>% 
   relocate(days_after_1pm, .after = date) %>% 
@@ -344,7 +383,7 @@ marcador <- base_inter %>%
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
 
-rm(uk, us, base_semi, base_inter, marcador)
+rm(base_semi, base_inter, marcador, u, v, w, x, y, z, wjp_2019, giniOWID, iso, df1, df2, CRT, democracy)
 
 ```
 
