@@ -27,6 +27,7 @@ library(sf)
 library(gganimate)
 library(av)
 library(broom)
+library(RColorBrewer)
 
 ```
 
@@ -100,13 +101,6 @@ t <- t %>%
 colnames(democracy)[1] <- "location"
 
 
-democracy %>% 
-        filter(!is.na(location)) %>% 
-        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
-        mutate(Rank = str_remove(Rank, "[=]$")) %>%
-        anti_join(iso, by = c("location" = "name"))
-        
-
 iso <- iso_codes %>% 
         mutate_if(is.character, str_replace_all,
                   pattern = "United Kingdom of Great Britain and Northern Ireland", replacement = "United Kingdom") %>%
@@ -130,6 +124,12 @@ iso <- iso_codes %>%
         mutate_if(is.character, str_replace_all, pattern = "Côte d'Ivoire", replacement = "Côte d’Ivoire") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Viet Nam", replacement = "Vietnam") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Eswatini", replacement = "eSwatini")
+
+democracy %>% 
+        filter(!is.na(location)) %>% 
+        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
+        mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        anti_join(iso, by = c("location" = "name"))
 
 
 dmi <- democracy %>% 
@@ -575,16 +575,30 @@ base %>%
 
 
 
-Análise descritiva da base World Justice Project 2019
+#Análise descritiva da base World Justice Project 2019
 
 
 
 1) Agrupar de acordo com o grupo de renda e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre o nível de produto e a solidez institucional local
 ```{r}
 
+#Tabela
 wjp_income <- wjptidy %>% 
   group_by(`Income Group`) %>% 
-  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
+  summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`)) %>% 
+  arrange(`WJP Rule of Law Index: Overall Score`) %>% 
+  view()
+
+#Gráfico de colunas
+
+wjp_income %>%                          
+  arrange(`WJP Rule of Law Index: Overall Score`) %>%                                
+  mutate(`Income Group` = factor(`Income Group`, `Income Group`)) %>%   
+  ggplot(aes(x=`Income Group`, y=`WJP Rule of Law Index: Overall Score`)) +                 
+  geom_bar(aes(fill =`Income Group`), stat="identity") +
+  scale_fill_brewer(palette = "RdYlGn") +
+  theme_classic() +
+  ggtitle("Income and WJP Overall Score")
 
 ```
 
@@ -597,6 +611,18 @@ wjp_region <- wjptidy %>%
   group_by(Region) %>% 
   summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
 
+brewer.pal.info
+
+wjp_region %>%                          
+  arrange(`WJP Rule of Law Index: Overall Score`) %>%                                
+  mutate(Region = factor(Region, Region)) %>%   
+  ggplot(aes(x=Region, y=`WJP Rule of Law Index: Overall Score`)) +                 
+  geom_bar(aes(fill =Region), stat="identity") +
+  scale_fill_brewer(palette = "Set1") +
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  ggtitle("Region and WJP Overall Score")
+
+
 ```
 
 
@@ -605,43 +631,40 @@ wjp_region <- wjptidy %>%
 ```{r}
 
 base %>% 
-  select(country_name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>%
+  select(name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>%
+  mutate(type = factor(type, levels = c("Authoritarian regime", "Hybrid regime","Flawed democracy", "Full democracy"))) %>% 
   filter(!is.na(type)) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
-  geom_point(mapping = aes(color = type)) +
+  geom_point(mapping = aes(color = type), size = 3) +
   geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement` > 0.8),
-                   aes(label = country_name),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean()
+  theme_clean() +
+  ggtitle("Regulatory Enforcement and Constrantis on Government Powers  -  WJP")
 
-base %>% 
-  select(country_name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>%
-  filter(!is.na(type)) %>%
-  ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
-  geom_point(mapping = aes(color = type)) +
-  geom_smooth(method = lm, se = FALSE) +
-  theme_clean()
 
 ```
 
 
 
-4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o fator 2 (Absence of Corruption)
+4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o Fator 2 (Absence of Corruption)
 ```{r}
 
 wjptidy %>% 
-  select(country_name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
+  select(name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
   geom_point() +
   geom_smooth(se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
-                   aes(label = country_name),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
-                   segment.color = 'grey50') 
+                   segment.color = 'grey50') +
+  theme_classic() +
+  ggtitle("Civil Justice is free of discrimination and Absence of Corruption - WJP")
 
 ```
 
@@ -651,29 +674,32 @@ wjptidy %>%
 ```{r}
 
 wjptidy %>% 
-  select(country_name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
+  select(name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.82),
-                   aes(label = country_name),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
-                   segment.color = 'grey50') 
+                   segment.color = 'grey50') +
+  theme_classic() +
+  ggtitle("Order and Security and Regulatory Enforcement - WJP")
 
 ```
 
-Entre as bases
+#Entre as bases
 
 6) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
 ```{r}
+
 
 x <- base %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`), date == "2020-01-10" )
 
 base %>% 
-  select(country_name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, date) %>% 
+  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, date) %>% 
   filter(date == "2020-01-10") %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`)) %>% 
@@ -682,10 +708,11 @@ base %>%
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score`>0.8),
-                   aes(label = country_name),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') 
+
 
 ```
 
