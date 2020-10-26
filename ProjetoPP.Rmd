@@ -696,11 +696,11 @@ wjptidy %>%
 
 x <- base %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
-         !is.na(`Overall Score`), date == "2020-01-10" )
+         !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, date) %>% 
-  filter(date == "2020-01-10") %>% 
+  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm) %>% 
+  filter(days_after_1pm == 30) %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`,
@@ -711,7 +711,8 @@ base %>%
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
-                   segment.color = 'grey50') 
+                   segment.color = 'grey50') +
+  theme_clean()
 
 
 ```
@@ -722,21 +723,23 @@ base %>%
 ```{r}
 gen_names_2 <- base %>% 
   filter(!is.na(`3.3 Civic participation`), 
-         !is.na(`Overall Score`), date == "2020-01-10" )
+         !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(country_name, iso_code, `3.3 Civic participation`, `Overall Score`, date) %>% 
-  filter(date == "2020-01-10") %>% 
+  select(name, iso_code, `3.3 Civic participation`, `Overall Score`, days_after_1pm) %>% 
+  filter(days_after_1pm == 30) %>% 
   filter(!is.na(`3.3 Civic participation`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `3.3 Civic participation`, y = `Overall Score`)) +
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(gen_names_2, `3.3 Civic participation`>0.85),
-                   aes(label = country_name),
+  geom_label_repel(data = subset(gen_names_2, `3.3 Civic participation`>0.838),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
-                   segment.color = 'grey50') 
+                   segment.color = 'grey50') +
+  theme_clean()
+
 rm(gen_names_2)
 
 ```
@@ -747,21 +750,23 @@ rm(gen_names_2)
 
 gen_names_3 <- base %>% 
   filter(!is.na(`Factor 2: Absence of Corruption`), 
-         !is.na(`Overall Score`), date == "2020-01-10" )
+         !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(country_name, iso_code, `Factor 2: Absence of Corruption`, `Overall Score`, date) %>% 
-  filter(date == "2020-01-10") %>% 
+  select(name, iso_code, `Factor 2: Absence of Corruption`, `Overall Score`, days_after_1pm) %>% 
+  filter(days_after_1pm == 30) %>% 
   filter(!is.na(`Factor 2: Absence of Corruption`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `Factor 2: Absence of Corruption`, y = `Overall Score`)) +
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(gen_names_3, `Factor 2: Absence of Corruption`>0.85),
-                   aes(label = country_name),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
-                   segment.color = 'grey50') 
+                   segment.color = 'grey50') +
+  theme_clean()
+
 rm(gen_names_3)
 
 ```
@@ -772,19 +777,19 @@ rm(gen_names_3)
 
 gen_names_4 <- base %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), !is.na(total_cases_per_million), 
-         !is.na(total_deaths_per_million), date == "2020-09-10" )
+         !is.na(total_deaths_per_million), days_after_1pm == 100)
 
 #Usar datas comparáveis (days_after_1pm)
 base %>% 
-  select(country_name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
+  select(name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
   filter(days_after_1pm == 100) %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), 
          !is.na(total_cases_per_million)) %>% 
   ggplot(mapping = aes(y = log(total_cases_per_million), x = `Factor 6: Regulatory Enforcement`)) +
   geom_point() +
-  #geom_smooth(method = lm, se = FALSE) +
+  geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(gen_names_4, total_cases_per_million>15000),
-                   aes(label = country_name),
+                   aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
@@ -800,7 +805,7 @@ rm(gen_names_4)
 ```{r}
 
 base %>% 
-  select(country_name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
          !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 2) %>% 
   ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
