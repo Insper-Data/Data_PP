@@ -807,9 +807,9 @@ rm(gen_names_4)
 base %>% 
   select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
-         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 2) %>% 
-  ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
-  geom_point() 
+         !is.na(c6_stay_at_home_requirements)) %>% 
+  ggplot(mapping = aes(group = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_boxplot() 
 
 ```
 
@@ -819,15 +819,19 @@ base %>%
 p11 <- base %>% 
   select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
-         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm)) %>% 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm < 251) %>% 
   ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
   geom_point() +
-  theme_clean()
+  geom_smooth(method = lm, se = FALSE) +
+  theme_classic() +
+  labs(x = "Stay at home requirements")
 
 anim11 <- p11 + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}")
 
-animate(anim11, renderer = av_renderer("gifregulatory.gif"))
+animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
+
+
 ```
 
 
