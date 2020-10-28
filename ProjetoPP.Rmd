@@ -861,8 +861,72 @@ summary(reg1)
 
 ```
 
+#Pedidos pelo Conti
+
+1) Total de casos por milhão x Índice Gini
+
+```{r}
+
+#Calculating the quartiles
+
+base %>% 
+  filter(days_after_1pm == 1) %>% 
+  summarize(qs = quantile(population, c(0.33, 0.66)), prob = c(0.33, 0.66))
+
+#Graph
+  
+base %>% 
+  filter(days_after_1pm == 100) %>% 
+  mutate(pop_size = case_when(population < 2414713 ~ "Small", 
+                              population > 2414713 & population < 15831401 ~ "Medium",
+                              population > 15831401 ~ "Large")) %>% 
+  ggplot(aes(gini_index_world_bank_estimate, total_cases_per_million)) +
+  geom_point(aes(size = population, alpha = 0.5, color = region)) +
+  facet_wrap(~ pop_size) +
+  theme_clean() +
+  labs(x = "Gini Index", 
+       y = "Total cases per million", 
+       title = "Inequality and Covid cases")
+
+#Animation
+
+  
+gtc <- base %>% 
+  select(name, population, region, days_after_1pm, gini_index_world_bank_estimate, total_cases_per_million) %>% 
+  filter(days_after_1pm < 295) %>% 
+  mutate(pop_size = case_when(population < 2414713 ~ "Small", 
+                              population > 2414713 & population < 15831401 ~ "Medium",
+                              population > 15831401 ~ "Large")) %>% 
+  ggplot(aes(gini_index_world_bank_estimate, log(total_cases_per_million))) +
+  geom_point(aes(size = population, alpha = 0.5, color = region)) +
+  geom_smooth(method = lm, se = FALSE) +
+  facet_wrap(~ pop_size) +
+  theme_clean() +
+  labs(x = "Gini Index", 
+       y = "Log (Total cases per million)")
+
+anim_gtc <- gtc + transition_time(days_after_1pm) +
+  labs(title = "Days after 1 death per million: {frame_time}") +
+  ease_aes('linear')
+
+animate(anim_gtc, renderer = gifski_renderer("gifGTC.gif"))
 
 
+
+base %>% filter(days_after_1pm == 1) %>% 
+  arrange(population) %>% 
+  ggplot(aes(name, population)) +
+  geom_col()
+
+base %>%
+  ggplot(aes(x = reorder(iso_code, population), population)) + 
+  geom_col() +
+  coord_flip() +
+  theme_clean()
+
+
+
+```
 
 
 
