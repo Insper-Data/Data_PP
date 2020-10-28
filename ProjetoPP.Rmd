@@ -893,17 +893,19 @@ base %>%
   
 gtc <- base %>% 
   select(name, population, region, days_after_1pm, gini_index_world_bank_estimate, total_cases_per_million) %>% 
-  filter(days_after_1pm < 295) %>% 
+  filter(days_after_1pm < 290) %>% 
   mutate(pop_size = case_when(population < 2414713 ~ "Small", 
                               population > 2414713 & population < 15831401 ~ "Medium",
                               population > 15831401 ~ "Large")) %>% 
   ggplot(aes(gini_index_world_bank_estimate, log(total_cases_per_million))) +
   geom_point(aes(size = population, alpha = 0.5, color = region)) +
+  scale_alpha(guide = 'none') +
   geom_smooth(method = lm, se = FALSE) +
   facet_wrap(~ pop_size) +
   theme_clean() +
   labs(x = "Gini Index", 
-       y = "Log (Total cases per million)")
+       y = "Log (Total cases per million)",
+       subtitle = "Divided by population size")
 
 anim_gtc <- gtc + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}") +
