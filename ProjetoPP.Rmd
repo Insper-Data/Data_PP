@@ -441,7 +441,7 @@ p
 # Mapa Overall Score
 
 base %>% 
-  select(name, iso_code, `Overall Score`, date) %>% 
+  select(name, iso_code, iso2, `Overall Score`, date) %>% 
   filter(!is.na(`Overall Score`), date == Sys.Date() - 1) %>%
   clean_names() %>%  
   #left_join(iso) %>% 
@@ -625,9 +625,36 @@ wjp_region %>%
 
 ```
 
+3) Construir um mapa com Overall Score (WJP)
+
+```{r}
+
+base %>% 
+  select(name, iso_code, iso2, `WJP Rule of Law Index: Overall Score`, date) %>% 
+  mutate(`WJP Rule of Law Index: Overall Score` = 10*`WJP Rule of Law Index: Overall Score`) %>% 
+  filter(!is.na(`WJP Rule of Law Index: Overall Score`), date == Sys.Date() - 1) %>%
+  clean_names() %>% 
+  #left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = wjp_rule_of_law_index_overall_score)) +
+   scale_fill_gradient(low = "#ff726f", high = "#0087C0", limits = c(1, 10), breaks = seq(1, 10, 1)) +
+   labs(title = "WJP Rule of Law Index: Overall Score",
+        subtitle = ("Values for 2019"),
+        fill = "Index",
+        caption = "Source: World Justice Project") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+            legend.position = "right")
 
 
-3) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
+
+```
+
+
+
+4) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
 ```{r}
 
 base %>% 
@@ -648,9 +675,35 @@ base %>%
 
 ```
 
+5) Construir um mapa com a média do fator 6
+
+```{r}
+
+mapfactor6 <- base %>% 
+  select(name, iso_code, iso2, `Factor 6: Regulatory Enforcement`, date) %>% 
+  mutate(`Factor 6: Regulatory Enforcement` = 10*`Factor 6: Regulatory Enforcement`) %>% 
+  filter(!is.na(`Factor 6: Regulatory Enforcement`), date == Sys.Date() - 30) %>%
+  #filter(!is.na(`Factor 6: Regulatory Enforcement`), date == Sys.Date() - 1) %>%
+  clean_names() %>%
+  #left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = factor_6_regulatory_enforcement)) +
+   scale_fill_gradient(low = "#ff726f", high = "#0087C0", limits = c(1, 10), breaks = seq(1, 10, 1)) +
+   labs(title = "Regulatory Enforcement - WJP",
+        subtitle = ("Values for 2019"),
+        fill = "Index",
+        caption = "Source: World Justice Project") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+            legend.position = "right") 
 
 
-4)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o Fator 2 (Absence of Corruption)
+```
+
+
+6)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o Fator 2 (Absence of Corruption)
 ```{r}
 
 wjptidy %>% 
@@ -670,7 +723,7 @@ wjptidy %>%
 
 
 
-5) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
+7) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
 ```{r}
 
 wjptidy %>% 
@@ -690,7 +743,7 @@ wjptidy %>%
 
 #Entre as bases
 
-6) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
+8) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
 ```{r}
 
 
@@ -718,7 +771,7 @@ base %>%
 ```
 
 
-7)Relação entre a variável 3.3 (Civil Participation) do WJP e o Democracy Index, da The Economist
+9)Relação entre a variável 3.3 (Civil Participation) do WJP e o Democracy Index, da The Economist
 
 ```{r}
 gen_names_2 <- base %>% 
@@ -744,7 +797,7 @@ rm(gen_names_2)
 
 ```
 
-9)Relação entre o fator 2 (Absence of Corruption) do WJP e o Democracy Index, da The Economist
+10)Relação entre o fator 2 (Absence of Corruption) do WJP e o Democracy Index, da The Economist
 
 ```{r}
 
@@ -771,7 +824,7 @@ rm(gen_names_3)
 
 ```
 
-10)Relação entre a média do Fator 6 e as taxas populacionais de falecimento e de casos totais por COVID-19
+11)Relação entre a média do Fator 6 e as taxas populacionais de falecimento e de casos totais por COVID-19
 
 ```{r}
 
@@ -800,7 +853,7 @@ rm(gen_names_4)
 
 ```
 
-11)Relação entre o Fator 4 (Fundamental Rights) e a variável C6 (Stay at home requirements) do Oxford Response Tracker
+12)Relação entre o Fator 4 (Fundamental Rights) e a variável C6 (Stay at home requirements) do Oxford Response Tracker
 
 ```{r}
 
@@ -813,7 +866,7 @@ base %>%
 
 ```
 
-11B)Relação animada conforme dias após o marco 1 morte por milhão
+12B)Relação animada conforme dias após o marco 1 morte por milhão
 
 ```{r}
 p11 <- base %>% 
@@ -833,6 +886,30 @@ animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
 
 
 ```
+
+13) Comparar o mapa com a média do Fator 6 com o mapa com dados da Covid-19, controlando os dados pelo tamanho populacional
+
+```{r}
+
+
+
+
+par(mfrow=c(2,1))
+mapfactor6
+mapcovid
+
+
+
+
+
+```
+
+
+
+
+
+
+
 
 
 PEGAR UM GRÁFICO COM GINI NO HORIZONTAL, NO VERTICAL TOTAL DE CASOS POR MILHÃO; COM TUDO TRAVADO EM ALGUM DIA DEPOIS DE CASOS POR MILHÃO; USAR FACET_WRAP POR TAMANHO DA POPULAÇÃO (DIVIDIR EM 3 GRUPOS)
