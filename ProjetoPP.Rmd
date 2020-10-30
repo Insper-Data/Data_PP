@@ -680,9 +680,9 @@ base %>%
 ```{r}
 
 mapfactor6 <- base %>% 
-  select(name, iso_code, iso2, `Factor 6: Regulatory Enforcement`, date) %>% 
+  select(name, iso_code, iso2, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
   mutate(`Factor 6: Regulatory Enforcement` = 10*`Factor 6: Regulatory Enforcement`) %>% 
-  filter(!is.na(`Factor 6: Regulatory Enforcement`), date == Sys.Date() - 30) %>%
+  filter(!is.na(`Factor 6: Regulatory Enforcement`), days_after_1pm == 10) %>%
   #filter(!is.na(`Factor 6: Regulatory Enforcement`), date == Sys.Date() - 1) %>%
   clean_names() %>%
   #left_join(iso) %>% 
@@ -699,6 +699,7 @@ mapfactor6 <- base %>%
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "right") 
 
+mapfactor6
 
 ```
 
@@ -891,30 +892,31 @@ animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
 
 ```{r}
 
+mapcovid <- base %>% 
+  select(name, iso_code, iso2, total_deaths_per_million, days_after_1pm) %>% 
+  filter(!is.na(total_deaths_per_million), days_after_1pm == 200) %>%
+  #filter(!is.na(`Factor 6: Regulatory Enforcement`), date == Sys.Date() - 1) %>%
+  clean_names() %>%
+  #left_join(iso) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = total_deaths_per_million)) +
+   scale_fill_gradient(low = "#ff726f", high = "#0087C0", limits = c(0, 1000), breaks = seq(0, 1000, 100)) +
+   labs(title = "Total deaths per million",
+        subtitle = ("Values for 200 days after country reached 1 case per million"),
+        fill = "Index",
+        caption = "Source: Our World In Data") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+            legend.position = "right") 
 
 
-
-par(mfrow=c(2,1))
 mapfactor6
 mapcovid
 
 
-
-
-
 ```
-
-
-
-
-
-
-
-
-
-PEGAR UM GRÁFICO COM GINI NO HORIZONTAL, NO VERTICAL TOTAL DE CASOS POR MILHÃO; COM TUDO TRAVADO EM ALGUM DIA DEPOIS DE CASOS POR MILHÃO; USAR FACET_WRAP POR TAMANHO DA POPULAÇÃO (DIVIDIR EM 3 GRUPOS)
-FAZER COM RENDA (GRUPOS DE RENDA) TAMBÉM
-FAZER POR REGIÃO TAMBÉM
 
 
 B) Testes de Regressão
@@ -1002,7 +1004,6 @@ base %>%
   geom_col() +
   coord_flip() +
   theme_clean()
-
 
 
 ```
