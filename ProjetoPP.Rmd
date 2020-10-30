@@ -1008,5 +1008,45 @@ base %>%
 
 ```
 
+2) Distribuição dos dias
 
+```{r}
+
+base %>% 
+  select(name, days_after_1pm, date) %>% 
+  group_by(name)%>% 
+  slice(which.max(days_after_1pm)) %>% 
+  ungroup() %>% 
+  mutate(name = fct_reorder(name, desc(days_after_1pm))) %>% 
+  ggplot(aes(name, days_after_1pm)) +
+  geom_col() +
+  coord_flip() +
+  theme_classic()
+
+
+```
+
+3) Gini x Casos (Grupos WJP)
+
+```{r}
+
+#Graph
+  
+base %>% 
+  filter(days_after_1pm == 100, !is.na(`Income Group`)) %>% 
+  clean_names() %>% 
+  ggplot(aes(gini_index_world_bank_estimate, total_cases_per_million)) +
+  geom_point(aes(size = 3, alpha = 0.5, color = region)) +
+  scale_alpha(guide = 'none') +
+  geom_smooth(method = lm, se = FALSE) +
+  facet_wrap(~ income_group) +
+  theme_clean() +
+  labs(x = "Gini Index", 
+       y = "Total cases per million", 
+       title = "Inequality and Covid cases", 
+       subtitle = "100 days after reaching 1 case per million")
+
+
+
+```
 
