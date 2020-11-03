@@ -31,9 +31,40 @@ library(RColorBrewer)
 
 ```
 
+#Introdução
+
+##Oxford Covid-19 Government Response Tracker
+
+	The Oxford COVID-19 Government Response Tracker (OxCGRT) consists of a database that collects information regarding several different commonly used policies that governments around the world have taken to respond to the pandemic itself. In our study, the data taken from the 18 indicators will be used as an indication of the decisions that each government made, regarding containment and health, economic support and stringency; valuable information as we intend to comprehend how the decision regarding each of the points just mentioned is related to the institucional characteristics of each country; and how they have influenced on the evolution of the pandemic respectively. 
+The OxCGRT is especially relevant as it proposes standardized indicators of policies, which makes possible the comparison between countries. It is important, however, to make clear that the response tracker does not point out the effectiveness or the appropriateness of each policy and country’s response - which will be indirectly analyzed in our study. 
+
+##World Justice Project Rule of Law Index
+	
+	The World Justice Project Rule of Law Index, available in the following link: https://worldjusticeproject.org/our-work/research-and-data/wjp-rule-law-index-2020/current-historical-data; consists in a quantitative assessment tool designed by the WJP that offers a very interesting picture as far as the legal institutions of country go, analysing the political environment, legal restrictions to governments powers, corruption incidence, order and security, civil and criminal justice, regulatory enforcement and the access to fundamental rights. Collected since 2012, the WJP Rule of Law Index is based on a worldwide survey, which covers 128 countries and jurisdictions, through household and expert inquiries. The database also groups countries according to their income level.
+	We’ve chosen the WJP Rule of Law Index, as opposed to the World Bank Doing Business index, as there have been indications of improper manipulation of data regarding such database. However, the information brought by such bibliography would be a valuable compliment to the WJP database, as the World Bank encompasses a perspective less associated with legal institutions, and strictly related to economic ones. Because of that, we’d like to point out that if the World Bank formally announces that the data from the Doing Business index has been revised and is fully reliable, it would be interesting to unify such information in our database, providing even more robustness to our econometric analysis and more possibilities of study derived from our database.
+	
+##Our World in Data (Covid-19)
+
+	Our World in Data is a research and data hub that is recognized around the world, with information that goes from demographic change to sustainability and politics. In this study, however, we’ve focused on the data that the site provides regarding the Covid-19 pandemic, updated daily. The database provides information regarding deaths, cases, tests, hospitalizations, mortality risk and excess mortality - as well as population numbers, for example. As a reliable source, used in researches around the world, the Our World in Data Covid-19 Data has been selected as our reference of the pandemic development around the globe, being of unequivocal relevance in our study. 
+  It is worth pointing out that, in the intent to make data from different countries more comparable, we’ve created two variables through such database. Firstly, we’ve defined a relative measure of contamination: cases per million individuals in the population; which can encompass a richer information regarding the differences in the development of the pandemic in each country, as opposed to the absolute measures. Based on such information, we’ve created a variable that counts the days passed since the country reached the mark of 1 case per million inhabitants - a valuable material that amplifies our comparison capabilities and provides a more interesting control variable to our study, as countries can be positioned in different moments of Covid-19’s propagation.
+
+##The Economist’s 2019 Democracy Index
+
+	The 2019 Democracy Index, measured by The Economist’s Intelligence Unit, consists in a picture of the political context in 165 independent states and 2 territories, in the year of 2019. The index is based on a continuous grade between 0 and 10, given to each country, that goes from Authoritarian Regime (a 0) to Full Democracy (a 10), based on on 60 indicators divided between 5 categories: electoral process and pluralism; civil liberties; the functioning of the government; political participation; and political culture. Because of that, it is a powerful measure for political institutions, that complements well the WJP Rule of Law Index.
+	It is important to make explicit a supposition that we make when using the 2019 Democracy Index: the political matrix of each country tends to present only marginal changes, from one year to the next; and because of that we believe it is reasonable to assume that the indicators that make part of the Democracy Index haven’t changed significantly from 2019 to 2020. However, it would be desirable that this database is updated as soon as the 2020 Democracy Index is made available by The Economist’s Intelligence Unit. More than that, it would be interesting to study the possible impacts of the Covid-19’s pandemic in the political institutional matrix of the countries that compose such database.
+	
+##Gini Index
+	
+	The Gini Index is a well-known measure of economic inequality, measuring income distribution across a country’s population, according to public data of the respective economy. In our study, we have obtained the latest result of the Gini index to each country that is contained in our database - a decision which supposes that such information holds up even to countries whose index dates from 2 decades ago. Even so, the decision to use the Gini Index in our study is based on the necessity to control our analysis with the economic inequality of each country, as studies around the world have shown that the economic and distributional gap has an impact in the development of the pandemic. In relation to that, a group within Insper Data, composed by the students Arthur Alberti, Gustavo Luchesi and Pedro Henrique Saboia; has developed a study that shows the impact of the different levels of income and infectivity in the excess mortality associated with Covid-19, in all microrregions of Brazil - if you have any interest in such study, be sure to take a look at https://github.com/Insper-Data/Data-Micro. 
+Nevertheless, the Gini Index, even with lags in some countries, can be considered the most complete and robust data encompassing income inequality, enabling us to control our study with such information. In addition to that, it provides us with a powerful analytical tool, that could be used as the focus of a study, through our database.
+
+##Our Database
+
+	By aggregating all the information previously detailed, our database consists in a hub of institucional, political and Covid-19 pandemic’s statistics, which makes feasible an analysis that intends to relate the development of such data. To ease the manipulation of different databases and enable further manipulation, we have developed a simple dictionary, which states the name of each country in each database, and associates it with the respective Iso-Code of the nation. In our study, the use of the file will be guided to develop research on the relationship between the institutional environment of different countries and the efficiency of measures to contain the pandemic, in regards to public policies. However, we believe that there are multiple ways to take on such data and make much valuable analysis and interpretations - ones that could even reinforce the relevance of political and institucional matrices.
+	This document is divided in three sections, essentially: the manipulation and unification of databases; the descriptive analysis of the data; and the regression and robustness analysis. In the end of the document, we also provide everyone interested in such study some important empirical and theoretical bibliographical references, which we’ve used to develop our study, and that can be valuable to anyone interested in using this database as a study and/or research material.
 
 
-Puxando as bases
+##Getting the databases
 ```{r}
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
@@ -71,10 +102,10 @@ iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countrie
 
 
 
-Limpando as bases
+##Cleaning the data
 ```{r}
 
-# Limpando a base de testes (Our World in Data)
+# Cleaning the test database from Our World in Data
 
 t <- tests %>% 
   select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
@@ -96,7 +127,7 @@ t <- t %>%
 
 
 
-# Limpando a base Democracy Index (democracy)
+# Cleaning the Democracy Index database (democracy)
 
 colnames(democracy)[1] <- "location"
 
@@ -145,7 +176,7 @@ dmi <- democracy %>%
                       Rank >= 77 & Rank <= 113 ~ "Hybrid regime",
                       Rank >= 114 ~ "Authoritarian regime"))
 
-# Limpando a base World Justice Project (Instituições)
+# Cleaning the World Justice Project database (Institutions)
 
 wjptidy <- wjp_2019 %>% 
   pivot_longer(-Country, names_to = "Countries", values_to = "Countries Codes") %>%
@@ -157,7 +188,7 @@ wjptidy <- wjp_2019 %>%
 
 wjptidy[, c(5:57)] <- sapply(wjptidy[, c(5:57)], as.numeric)
 
-# Limpando Response Tracker
+# Cleaning the Oxford Covid-19 Response Tracker
 
 
 contador = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) # gera um contador para restaura os EUA e UK
@@ -188,7 +219,7 @@ cpt <- cpt %>%
   bind_rows(us) %>% 
   bind_rows(uk)
 
-#Limpando Gini
+#Cleaning the Gini Index Database
 
 giniOWIDlatest <- giniOWID %>% 
   group_by(Entity) %>% 
@@ -202,7 +233,7 @@ giniOWIDlatest <- giniOWID %>%
 ```
 
 
-Criando dicionario
+#Creating a dictionary for our database
 ```{r}
 
 x <- cpt %>% 
@@ -249,7 +280,7 @@ u <- dmi %>%
 u %>% anti_join(w, by = "iso_code") 
 
 
-#### Criando o dicionario ####
+#### Making the dictionary ####
 
 
 dici <- iso_codes %>% 
@@ -305,7 +336,7 @@ dmi <- dici %>%
 ```
 
 
-Juntando as bases
+## Structuring a unified database (Our database)
 ```{r}
 # Unificação do World Justice com CPT
 
@@ -919,30 +950,10 @@ mapcovid
 ```
 
 
-B) Testes de Regressão
-```{r}
-b <- base %>% 
-  filter(days_after_1pm > 0) 
 
-reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
+#Additional Descriptive Analysis
 
-summary(reg)
-
-
-reg1 <- lm_robust(total_cases_per_million ~ ., data = subset(b, select=c(-country_name, -iso_code, -date, -iso2, -confirmed_cases, -total_cases, -new_cases, -total_deaths, -new_deaths, -new_cases_per_million, -confirmed_deaths, -total_deaths_per_million, -`Short-term tests per case`, -`Short-term positive rate`,-`Cumulative total`, -`Cumulative total per thousand`, -`7-day smoothed daily change`, -`7-day smoothed daily change per thousand`, -`Daily change in cumulative total per thousand`, -new_deaths_smoothed_per_million, -new_deaths_per_million, -new_cases_smoothed_per_million, -new_deaths_smoothed, -new_cases_smoothed, -`Daily change in cumulative total`)))
-           
-tidy(reg1) %>% 
-  filter(p.value < 0.05)
-
-summary(reg1)
-
-# Pesquisar sobre PCA (Principal Component Analysis) -> BEM LEGAL
-
-```
-
-#Pedidos pelo Conti
-
-1) Total de casos por milhão x Índice Gini
+1) Total de cases per million x Gini Index
 
 ```{r}
 
@@ -1008,7 +1019,7 @@ base %>%
 
 ```
 
-2) Distribuição dos dias
+2) Days Distribution
 
 ```{r}
 
@@ -1026,7 +1037,7 @@ base %>%
 
 ```
 
-3) Gini x Casos (Grupos WJP)
+3) Gini x Cases (WJP Groups)
 
 ```{r}
 
@@ -1050,3 +1061,25 @@ base %>%
 
 ```
 
+
+##Regressions and tests
+```{r}
+b <- base %>% 
+  filter(days_after_1pm > 0) 
+
+reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
+
+summary(reg)
+
+
+reg1 <- lm_robust(total_cases_per_million ~ ., data = subset(b, select=c(-country_name, -iso_code, -date, -iso2, -confirmed_cases, -total_cases, -new_cases, -total_deaths, -new_deaths, -new_cases_per_million, -confirmed_deaths, -total_deaths_per_million, -`Short-term tests per case`, -`Short-term positive rate`,-`Cumulative total`, -`Cumulative total per thousand`, -`7-day smoothed daily change`, -`7-day smoothed daily change per thousand`, -`Daily change in cumulative total per thousand`, -new_deaths_smoothed_per_million, -new_deaths_per_million, -new_cases_smoothed_per_million, -new_deaths_smoothed, -new_cases_smoothed, -`Daily change in cumulative total`)))
+           
+tidy(reg1) %>% 
+  filter(p.value < 0.05)
+
+summary(reg1)
+
+# Do the regressions structured in the Doc File and use PCA as an alternative analysis,
+# for robustness of the results
+
+```
