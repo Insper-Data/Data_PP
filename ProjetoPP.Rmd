@@ -438,7 +438,7 @@ to_add <- data.frame(matrix(NA, empty_bar*nlevels(dmi$type), ncol(dmi)) )
 colnames(to_add) <- colnames(dmi)
 to_add$group <- rep(levels(dmi$type), each=empty_bar)
 dmi <- rbind(dmi, to_add)
-dmi <- dmi %>% arrange(group)
+dmi <- dmi %>% arrange(desc(`Overall Score`), type)
 dmi$id <- seq(1, nrow(dmi))
  
 
@@ -449,7 +449,7 @@ label_data$hjust <- ifelse(angle < -90, 1, 0)
 label_data$angle <- ifelse(angle < -90, angle + 180, angle)
  
 
-p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill = type)) +       
+p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill = type)) +    
   geom_bar(stat = "identity", alpha=0.5) +
   ylim(-50, 11) +
   theme_minimal() +
@@ -493,10 +493,9 @@ base %>%
 # Mapa tipos democracia
 
 base %>% 
-  select(name, iso_code, type, date, `Overall Score`) %>% 
+  select(name, iso_code, type, date, `Overall Score`, iso2) %>% 
   filter(!is.na(type), date == Sys.Date() - 1) %>%
   clean_names() %>%  
-  left_join(iso) %>% 
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
@@ -522,20 +521,19 @@ skim(cpt)
 
 #Análise das variáveis "flag", que indicam se as políticas foram específicas ou gerais.
 
+#CANADÁ SEM DADO - PROBLEMA COM NA
 cpt %>% 
-  select(name, c1_flag, 
-         c2_flag, c3_flag, c4_flag, c5_flag,
-         c6_flag, c7_flag, e1_flag, h1_flag, iso_code) %>% 
-  filter(!is.na(c1_flag), 
-         !is.na(c2_flag), !is.na(c3_flag), 
-         !is.na(c4_flag), !is.na(c5_flag),
-         !is.na(c6_flag), !is.na(c7_flag), 
-         !is.na(e1_flag), !is.na(h1_flag)) %>% 
-  group_by(country_name, iso_code) %>%
+  select(name, c1_flag: h6_flag, iso_code, iso2) %>% 
+  mutate(across(c1_flag: h6_flag, ~ as.numeric(.x))) %>% 
+  filter(across(everything(), ~ .x >= 0)) %>% view()
+  clean_names() %>% 
+  group_by(name) %>% 
   summarise(generalismo = mean((c1_flag + 
          c2_flag + c3_flag + c4_flag + c5_flag +
-         c6_flag + c7_flag + e1_flag + h1_flag)/8)) %>% 
-  left_join(iso) %>% 
+         c6_flag + c7_flag + e1_flag + h1_flag)/8), iso2 = iso2) %>%  
+  ungroup() %>% 
+  view()
+  
   left_join(world, by = c("iso2" = "iso_a2")) %>%  
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
@@ -553,10 +551,9 @@ cpt %>%
 #Análise da variável C8 (International Travel Controls)
 
 base %>% 
-  select(country_name, c8_international_travel_controls, date, iso_code) %>% 
+  select(name, c8_international_travel_controls, date, iso_code, iso2) %>% 
   filter(!is.na(c8_international_travel_controls), date == Sys.Date() - 30) %>%
   clean_names() %>%
-  left_join(iso) %>% 
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
@@ -573,22 +570,23 @@ base %>%
 #Análise da relação entre C5 e E1
 
 cpt %>% 
-  select(country_name, c5_close_public_transport, e1_income_support) %>% 
+  select(name, c5_close_public_transport, e1_income_support) %>% 
   filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>% 
-  group_by(country_name) %>% 
+  group_by(name) %>% 
   summarise(media_fechamento_transporte = mean(c5_close_public_transport),
             media_suportederenda = mean(e1_income_support)) %>% 
   ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
     geom_point() +
-    geom_smooth(method = lm, se = FALSE)
+    geom_smooth(method = lm, se = FALSE) +
+  labs(title = "Scatterplot: C5 and E1")
   
 #Análise da relação entre E4 e C8 
   
 base %>% 
-  select(country_name, e4_international_support, c8_international_travel_controls, type) %>% 
+  select(name, e4_international_support, c8_international_travel_controls, type) %>% 
   filter(!is.na(e4_international_support), 
          !is.na(c8_international_travel_controls)) %>% 
-  group_by(country_name) %>% 
+  group_by(name) %>% 
   summarise(media_log_suporte = log(mean(e4_international_support)),
             media_controle = mean(c8_international_travel_controls), 
             tipe = type) %>% 
@@ -596,7 +594,11 @@ base %>%
   ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
     geom_point() +
     geom_smooth(method = lm, se = FALSE) +
-    theme_clean()
+    theme_clean() +
+   labs(title = "Scatterplot: E4 and C8",
+        x = "Average international travel controls",
+        y = "Log average of international support")
+  
 
 #Análise H2 e H5
 
@@ -797,7 +799,8 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean()
+  theme_clean() +
+  labs(title = "WJP and Democracy Index: Overall Scores")
 
 
 ```
@@ -806,6 +809,7 @@ base %>%
 9)Relação entre a variável 3.3 (Civil Participation) do WJP e o Democracy Index, da The Economist
 
 ```{r}
+
 gen_names_2 <- base %>% 
   filter(!is.na(`3.3 Civic participation`), 
          !is.na(`Overall Score`), days_after_1pm == 30)
@@ -823,7 +827,8 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean()
+  theme_clean() +
+  labs(title = "Overall Score and Civic Participation")
 
 rm(gen_names_2)
 
@@ -850,7 +855,8 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean()
+  theme_clean() +
+  labs(title = "Overall Score and Absence of Corruption")
 
 rm(gen_names_3)
 
@@ -894,7 +900,8 @@ base %>%
   filter(!is.na(`Factor 4: Fundamental Rights`), 
          !is.na(c6_stay_at_home_requirements)) %>% 
   ggplot(mapping = aes(group = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
-  geom_boxplot() 
+  geom_boxplot() +
+  labs(title = "Fundamental Rights and Stay at home requirements", x = "Stay at home requirements")
 
 ```
 
@@ -933,7 +940,7 @@ mapcovid <- base %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = total_deaths_per_million)) +
-   scale_fill_gradient(low = "#ff726f", high = "#0087C0", limits = c(0, 1000), breaks = seq(0, 1000, 100)) +
+   scale_fill_gradient(high = "#ff726f", low = "#0087C0", limits = c(0, 1000), breaks = seq(0, 1000, 100)) +
    labs(title = "Total deaths per million",
         subtitle = ("Values for 200 days after country reached 1 case per million"),
         fill = "Index",
