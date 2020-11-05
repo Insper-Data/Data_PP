@@ -167,7 +167,7 @@ iso <- iso_codes %>%
 
 
 iso <- iso_codes %>% 
-  mutate(across(where(is.character), ~ str_replace_all(.x, "(\w+\s|\w+\s\w+)\\(", "\w+\s|\w+\s\w+)"))
+  mutate(across(where(is.character), ~ str_replace_all(.x, "(\w+\s|\w+\s\w+)\\(", "\w+\s|\w+\s\w+)")))
 
 
 
