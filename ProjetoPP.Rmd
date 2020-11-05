@@ -11,23 +11,23 @@ editor_options:
 Pacotes
 ```{r}
 
-# library(estimatr)
-# library(janitor)
-# library(vctrs)
-# library(tidyverse)
-# library(skimr)
-# library(readxl)
-# library(stringi)
-# library(rvest)
-# library(lubridate)
-# library(ggthemes)
-# library(spData)
-# library(ggrepel)
-# library(sf)
-# library(gganimate)
-# library(av)
-# library(broom)
-# library(RColorBrewer)
+library(estimatr)
+library(janitor)
+library(vctrs)
+library(tidyverse)
+library(skimr)
+library(readxl)
+library(stringi)
+library(rvest)
+library(lubridate)
+library(ggthemes)
+library(spData)
+library(ggrepel)
+library(sf)
+library(gganimate)
+library(av)
+library(broom)
+library(RColorBrewer)
 
 library(tidyverse)
 library(broom)
@@ -1050,16 +1050,19 @@ base %>%
 ```{r}
 
 base %>% 
-  select(name, days_after_1pm, date) %>% 
+  select(name, iso_code, days_after_1pm, date, region) %>% 
   group_by(name)%>% 
   slice(which.max(days_after_1pm)) %>% 
   ungroup() %>% 
-  mutate(name = fct_reorder(name, desc(days_after_1pm))) %>% 
-  ggplot(aes(name, days_after_1pm)) +
+  mutate(iso_code = fct_reorder(iso_code, desc(days_after_1pm))) %>% 
+  mutate(days_after_1pm = days_after_1pm) %>% 
+  ggplot(aes(iso_code, days_after_1pm)) +
   geom_col() +
   coord_flip() +
-  theme_classic()
-
+  theme(axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
+  labs(title = "Days distribution",
+       x = "Every line is a country", 
+       y = "Days after reachng 1 case per million")
 
 ```
 
