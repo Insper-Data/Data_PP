@@ -11,23 +11,33 @@ editor_options:
 Pacotes
 ```{r}
 
-library(estimatr)
-library(janitor)
-library(vctrs)
+# library(estimatr)
+# library(janitor)
+# library(vctrs)
+# library(tidyverse)
+# library(skimr)
+# library(readxl)
+# library(stringi)
+# library(rvest)
+# library(lubridate)
+# library(ggthemes)
+# library(spData)
+# library(ggrepel)
+# library(sf)
+# library(gganimate)
+# library(av)
+# library(broom)
+# library(RColorBrewer)
+
 library(tidyverse)
-library(skimr)
-library(readxl)
-library(stringi)
-library(rvest)
-library(lubridate)
-library(ggthemes)
-library(spData)
-library(ggrepel)
-library(sf)
-library(gganimate)
-library(av)
 library(broom)
-library(RColorBrewer)
+library(gganimate)
+library(janitor)
+library(stringi)
+library(lubridate)
+library(readxl)
+
+
 
 ```
 
@@ -68,8 +78,8 @@ Nevertheless, the Gini Index, even with lags in some countries, can be considere
 ```{r}
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
-  filter(!location %in% c("International", "World","Kosovo")) %>% 
-  filter(date > "2019-12-31") %>% 
+  filter(!location %in% c("International", "World","Kosovo"),
+         date > "2019-12-31") %>% 
   select(-stringency_index)
 
 
@@ -85,6 +95,8 @@ wjp_2019 <- read_excel("FINAL_2020_wjp_rule_of_law_index_HISTORICAL.xlsx",
 
 democracy <- read_excel("EIU-Democracy Indices - Dataset - v3.xlsx", 
     sheet = "input-data-from-EIU-recentyrs", skip = 176)
+
+colnames(democracy)[1] <- "location"
 
 
 giniOWID <- read_csv("economic-inequality-gini-index.csv")
@@ -110,8 +122,7 @@ iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countrie
 t <- tests %>% 
   select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
-  rename(date = Date) %>% 
-  rename("iso_code" = "ISO code") 
+  rename(date = Date, iso_code = "ISO code") 
 
 df1 <- t %>% 
     filter(country %in% c("Singapore", "Poland", "Italy", "India", "France") & escala !=  "people tested")
@@ -128,8 +139,6 @@ t <- t %>%
 
 
 # Cleaning the Democracy Index database (democracy)
-
-colnames(democracy)[1] <- "location"
 
 
 iso <- iso_codes %>% 
@@ -155,6 +164,16 @@ iso <- iso_codes %>%
         mutate_if(is.character, str_replace_all, pattern = "Côte d'Ivoire", replacement = "Côte d’Ivoire") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Viet Nam", replacement = "Vietnam") %>% 
         mutate_if(is.character, str_replace_all, pattern = "Eswatini", replacement = "eSwatini")
+
+
+iso <- iso_codes %>% 
+  mutate(across(where(is.character), ~ str_replace_all(.x, "(\w+\s|\w+\s\w+)\\(", "\w+\s|\w+\s\w+)"))
+
+
+
+
+
+
 
 democracy %>% 
         filter(!is.na(location)) %>% 
