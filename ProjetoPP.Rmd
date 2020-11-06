@@ -8,7 +8,7 @@ editor_options:
 ---
 
 
-Pacotes
+Packages 
 ```{r}
 
 # library(vctrs)
@@ -34,7 +34,7 @@ library(estimatr)
 
 ```
 
-#Introdução
+#Introduction
 
 ## Oxford Covid-19 Government Response Tracker
 
@@ -189,7 +189,9 @@ wjptidy <- wjp_2019 %>%
 # Cleaning the Oxford Covid-19 Response Tracker
 
 
-contador = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) # gera um contador para restaura os EUA e UK
+contador = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) 
+# This line of code generates a counter which make it viable to restore data related to the US and UK 
+
 dias = (1: (257 + contador))
 
 cpt <- CRT %>% 
@@ -198,8 +200,8 @@ cpt <- CRT %>%
   rename(iso_code = "country_code") %>% 
   select(- c(region_name, region_code)) %>% 
   relocate(confirmed_cases, .after = country_name) %>% 
-  filter(iso_code != "RKS") # tiramos o Kosovo pois ele não está nas outra bases e complicaria a análise. 
-                            # Acreditamos que ele tenha pouca representatividade
+  filter(iso_code != "RKS") 
+# We opted to desconsider Kosovo, as the country didn't have any information in any of the other databases. Still, we believe that such decision won't change our conclusions in any significant way.
   
 
 us <- cpt %>% 
@@ -335,33 +337,33 @@ dmi <- dici %>%
 
 ## Structuring a unified database (Our database)
 ```{r}
-# Unificação do World Justice com CPT
+# Unifing the World Justice Project Rule of Law with CPT
 
 
 wjp_cpt <- left_join(cpt, wjptidy, by = c("iso_code", "name", "region", "iso2"))
 
-# wjp_cpt %>% filter(is.na(name)) %>% view #### Kosovo não aparece pq não está em nenhuma base alem do CRT
+# wjp_cpt %>% filter(is.na(name)) %>% view #### Kosovo does not appear in any database, other than CPT
 
-# Juntando Our world in data (covid) + Our world in data (t) +  Democracy Index (dmi)
+# Unifing Our world in Data (Covid) + Our world in data (t) +  Democracy Index (dmi)
 
 junto <- covid %>% 
   left_join(dmi, by = c("iso_code", "region", "iso2", "name")) %>% 
   left_join(t, by = c("iso_code", "region", "iso2", "date", "name"))
 
 
-# junto %>% filter(is.na(name)) %>% view ### tiramos o Kosovo 
+# junto %>% filter(is.na(name)) %>% view ### Taking Kosovo out 
 
 
-# Juntando tudo
+# Getting all data together
 
 base_semi <- left_join(junto, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
 
 
 base_semi %>% count(name) 
 
-## anti_join(junto, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### excluimos o dia 31/12/2019
+## anti_join(junto, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### Excluding the 31/12/2019 from the database
 
-#Juntando com Gini
+# Unifing the Gini Index with the structured database
 
 base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", "iso2", "name")) %>% 
   select(!(m1_wildcard))
@@ -372,9 +374,8 @@ base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", 
 
 
 
-Criando variável que conta quantos dias passaram desde que o país atingiu 1 caso por milhão de habitantes
+Creating a variable that counts how many days have passed since each country has reached 1 case per million inhabitants (It is important to comment that we've used the same threshold as Our World in Data)
 ```{r}
-#Mesmo threshold do Our World In Data
 
 marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
@@ -390,7 +391,6 @@ marcador <- base_inter %>%
 #mutate(rank = row_number()) %>% 
 #ungroup()
 
-#fazer uma análise da distribuição dos dias (o último valor para cada país), para ver como está a situação atual
 
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
@@ -400,7 +400,7 @@ rm(base_semi, base_inter, marcador, u, v, w, x, y, z, wjp_2019, giniOWID, iso, d
 ```
 
 
-Análise descritiva - Democracy Index
+Descriptive Analysis - Democracy Index
 
 ```{r}
 
@@ -425,7 +425,7 @@ dmi %>%
   theme_clean()
 
 
-# Barplot em circulo
+# Barplot in a circle
 
 empty_bar <- 4
 to_add <- data.frame(matrix(NA, empty_bar*nlevels(dmi$type), ncol(dmi)) )
@@ -463,7 +463,7 @@ p
 
 
 
-# Mapa Overall Score
+# Map Overall Score
 
 base %>% 
   select(name, iso_code, iso2, `Overall Score`, date) %>% 
@@ -484,7 +484,7 @@ base %>%
             legend.position = "right")
 
 
-# Mapa tipos democracia
+# Map Democracy Types
 
 base %>% 
   select(name, iso_code, type, date, `Overall Score`, iso2) %>% 
@@ -506,13 +506,13 @@ base %>%
 ```
 
 
-Análise descritiva - Oxford Covid-19 Government Response Tracker
+Descriptive Analysis - Oxford Covid-19 Government Response Tracker
 
 ```{r}
 
-#Análise das variáveis "flag", que indicam se as políticas foram específicas ou gerais.
+# Analysis of the "flag" variables, which indicate if the public politics related to Covid have been specific to regions and counties or general to the entire country.
 
-#CANADÁ SEM DADO - PROBLEMA COM NA
+## CANADA DOES NOT HAVE INFORMATION - PROBLEM WITH MISSING DATA ABOUT THE COUNTRY
 
 cpt %>% 
   select(name, c1_flag: h6_flag, iso_code, iso2) %>% 
@@ -540,7 +540,7 @@ cpt %>%
           legend.position = "right")
 
 
-#Análise da variável C8 (International Travel Controls)
+# Analysis of C8 (International Travel Controls)
 
 base %>% 
   select(name, c8_international_travel_controls, date, iso_code, iso2) %>% 
@@ -559,7 +559,7 @@ base %>%
     theme(panel.background = element_rect(fill = "#b3d5e0"),
           legend.position = "right")
 
-#Análise da relação entre C5 e E1
+# Visual analysis of the correlation between C5 e E1
 
 cpt %>% 
   select(name, c5_close_public_transport, e1_income_support) %>% 
@@ -572,7 +572,7 @@ cpt %>%
     geom_smooth(method = lm, se = FALSE) +
   labs(title = "Scatterplot: C5 and E1")
   
-#Análise da relação entre E4 e C8 
+# Visual analysis of the correlation between E4 e C8 
   
 base %>% 
   select(name, e4_international_support, c8_international_travel_controls, type) %>% 
@@ -592,29 +592,24 @@ base %>%
         y = "Log average of international support")
   
 
-#Análise H2 e H5
-
-
-
 ```
 
 
 
-#Análise descritiva da base World Justice Project 2019
+# Descriptive Analysis of the World Justice Project Rule of Law 2019 database
 
 
-
-1) Agrupar de acordo com o grupo de renda e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre o nível de produto e a solidez institucional local
+1) Group countries according to their income group and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the product level and the local institutional strength
 ```{r}
 
-#Tabela
+# Table
 wjp_income <- wjptidy %>% 
   group_by(`Income Group`) %>% 
   summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`)) %>% 
   arrange(`WJP Rule of Law Index: Overall Score`) %>% 
   view()
 
-#Gráfico de colunas
+# Column Graph
 
 wjp_income %>%                          
   arrange(`WJP Rule of Law Index: Overall Score`) %>%                                
@@ -629,7 +624,7 @@ wjp_income %>%
 
 
 
-2)Agrupar de acordo com a região e analisar, de forma geral, o score médio do Índice do WJP, visando obter alguma relação entre a solidez institucional local e as regiões do mapa
+2) Group countries according to the region and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the local institutional strength and the regions of the map
 ```{r}
 
 wjp_region <- wjptidy %>% 
@@ -650,7 +645,7 @@ wjp_region %>%
 
 ```
 
-3) Construir um mapa com Overall Score (WJP)
+3) Map with the WJP Overall Score
 
 ```{r}
 
@@ -952,7 +947,7 @@ mapcovid
 
 #Additional Descriptive Analysis
 
-1) Total de cases per million x Gini Index
+1) Total cases per million x Gini Index
 
 ```{r}
 
@@ -1080,8 +1075,7 @@ tidy(reg1) %>%
 
 summary(reg1)
 
-# Do the regressions structured in the Doc File and use PCA as an alternative analysis,
-# for robustness of the results
+
 
 
 reg2 <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + extreme_poverty + human_development_index, data = b)
