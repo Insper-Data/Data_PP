@@ -12,21 +12,11 @@ Pacotes
 ```{r}
 
 # library(estimatr)
-# library(janitor)
 # library(vctrs)
-# library(tidyverse)
 # library(skimr)
-# library(readxl)
-# library(stringi)
 # library(rvest)
-# library(lubridate)
-# library(ggthemes)
-# library(spData)
 # library(ggrepel)
-# library(sf)
-# library(gganimate)
 # library(av)
-# library(broom)
 # library(RColorBrewer)
 
 library(tidyverse)
@@ -36,7 +26,9 @@ library(janitor)
 library(stringi)
 library(lubridate)
 library(readxl)
-
+library(sf)
+library(ggthemes)
+library(spData)
 
 
 ```
@@ -131,65 +123,52 @@ df1 <- t %>%
 df2 <- t %>%
     filter(country %in% c("United States", "Japan") & escala == "tests performed")
   
-
 t <- t %>% 
     anti_join(df1) %>% 
     anti_join(df2)
 
 
 
-# Cleaning the Democracy Index database (democracy)
+# Arranging iso to join in the DMI
 
 
 iso <- iso_codes %>% 
-        mutate_if(is.character, str_replace_all,
-                  pattern = "United Kingdom of Great Britain and Northern Ireland", replacement = "United Kingdom") %>%
-        mutate_if(is.character, str_replace_all, pattern = "Korea, Republic of", replacement = "South Korea") %>%
-        mutate_if(is.character, str_replace_all, pattern = "Taiwan, Province of China", replacement = "Taiwan") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Czechia", replacement = "Czech Republic") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Moldova.*", replacement = "Moldova") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Tanzania, United Republic of", replacement = "Tanzania") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Kyrgyzstan", replacement = "Kyrgyz Republic") %>%
-        mutate_if(is.character, str_replace_all, pattern = "Bolivia.*", replacement = "Bolivia") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Palestine, State of", replacement = "Palestine") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Congo(?!,)", replacement = "Congo (Brazzaville)") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Russian Federation", replacement = "Russia") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Venezuela \\(Bolivarian Republic of\\)", replacement = "Venezuela") %>%
-        mutate_if(is.character, str_replace_all, pattern = "Iran \\(Islamic Republic of\\)", replacement = "Iran") %>%
-        mutate_if(is.character, str_replace_all, pattern = "Lao People's Democratic Republic", replacement = "Laos") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Syrian Arab Republic", replacement = "Syria") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Congo, Democratic Republic of the", replacement = "Democratic Republic of Congo") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Korea \\(Democratic People's Republic of\\)", replacement = "North Korea") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Bosnia and Herzegovina", replacement = "Bosnia and Hercegovina") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Côte d'Ivoire", replacement = "Côte d’Ivoire") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Viet Nam", replacement = "Vietnam") %>% 
-        mutate_if(is.character, str_replace_all, pattern = "Eswatini", replacement = "eSwatini")
+  mutate(across(where(is.character), ~ str_remove_all(.x, "(?<=United Kingdom).+")),
+         across(where(is.character), ~ str_replace_all(.x, "Korea, Republic of", "South Korea")),
+         across(where(is.character), ~ str_replace_all(.x, "Czechia", "Czech Republic")),
+         across(where(is.character), ~ str_replace_all(.x, "Kyrgyzstan", "Kyrgyz Republic")),
+         across(where(is.character), ~ str_remove_all(.x, "(?<=Russia).+")),
+         across(where(is.character), ~ str_replace_all(.x, "Lao People's Democratic Republic", "Laos")),
+         across(where(is.character), ~ str_remove_all(.x, "(?<=Syria).+")),
+         across(where(is.character), ~ str_replace_all(.x, "Congo, Democratic Republic of the", "Democratic Republic of Congo")),
+         across(where(is.character), ~ str_replace_all(.x, "Bosnia and Herzegovina", "Bosnia and Hercegovina")),
+         across(where(is.character), ~ str_replace_all(.x, "Côte d'Ivoire", "Côte d’Ivoire")),
+         across(where(is.character), ~ str_replace_all(.x, "Viet Nam", "Vietnam")),
+         across(where(is.character), ~ str_replace_all(.x, "Eswatini", "eSwatini")),
+         across(where(is.character), ~ str_replace_all(.x, "Korea \\(Democratic People's Republic of\\)", "North Korea")),
+         across(where(is.character), ~ str_remove_all(.x, "(?<=.)\\s\\(.+")),
+         across(where(is.character), ~ str_remove_all(.x, "(?<=.)\\,\\s.+")),
+         across(where(is.character), ~ str_replace_all(.x, "(?<!.)Congo(?!,)", "Congo (Brazzaville)")))
 
-
-iso <- iso_codes %>% 
-  mutate(across(where(is.character), ~ str_replace_all(.x, "(\w+\s|\w+\s\w+)\\(", "\w+\s|\w+\s\w+)")))
-
-
-
-
-
-
+# Checking if the changes are correct
 
 democracy %>% 
         filter(!is.na(location)) %>% 
-        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
-        mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`),
+               Rank = str_remove(Rank, "[=]$")) %>% 
         anti_join(iso, by = c("location" = "name"))
 
 
+# Cleaning DMI 
+
 dmi <- democracy %>% 
         filter(!is.na(location)) %>% 
-        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`)) %>% 
-        mutate(Rank = str_remove(Rank, "[=]$")) %>%
+        mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`), 
+               Rank = str_remove(Rank, "[=]$")) %>% 
         left_join(iso, by = c("location" = "name")) %>% 
-        mutate(location = str_remove(location, "of America")) %>% 
-        mutate(Rank = as.integer(Rank)) %>% 
-        mutate(type = case_when(
+        mutate(location = str_remove(location, "of America"),
+               Rank = as.integer(Rank),
+               type = case_when(
                       Rank <= 22 ~ "Full democracy",
                       Rank >= 23 & Rank <= 75 ~ "Flawed democracy",
                       Rank >= 77 & Rank <= 113 ~ "Hybrid regime",
@@ -202,10 +181,9 @@ wjptidy <- wjp_2019 %>%
   pivot_wider(id_cols = c("Countries", "Countries Codes"), 
               names_from = "Country", values_from = "Countries Codes") %>% 
   select(-6) %>% 
-  rename("iso_code" = "Country Code") %>% 
-  rename("country_name" = "Countries")
+  rename(iso_code = "Country Code", country_name = "Countries") %>% 
+  mutate(across(`WJP Rule of Law Index: Overall Score`:`8.7. Due process of the law and rights of the accused`, ~ as.numeric(.x)))
 
-wjptidy[, c(5:57)] <- sapply(wjptidy[, c(5:57)], as.numeric)
 
 # Cleaning the Oxford Covid-19 Response Tracker
 
@@ -216,11 +194,11 @@ dias = (1: (257 + contador))
 cpt <- CRT %>% 
   clean_names() %>% 
   mutate(date = ymd(date)) %>% 
-  rename(c("iso_code" = "country_code")) %>% 
+  rename(iso_code = "country_code") %>% 
   select(- c(region_name, region_code)) %>% 
   relocate(confirmed_cases, .after = country_name) %>% 
   filter(iso_code != "RKS") # tiramos o Kosovo pois ele não está nas outra bases e complicaria a análise. 
-                            #Acreditamos que ele tenha pouca representatividade
+                            # Acreditamos que ele tenha pouca representatividade
   
 
 us <- cpt %>% 
@@ -233,8 +211,8 @@ uk <- cpt %>%
 
 
 cpt <- cpt %>% 
-  filter(country_name != "United States" & iso_code != "USA") %>% 
-  filter(country_name != "United Kingdom" & iso_code != "GBR") %>%
+  filter(country_name != "United States" & iso_code != "USA",
+         country_name != "United Kingdom" & iso_code != "GBR") %>% 
   bind_rows(us) %>% 
   bind_rows(uk)
 
@@ -243,9 +221,9 @@ cpt <- cpt %>%
 giniOWIDlatest <- giniOWID %>% 
   group_by(Entity) %>% 
   filter(Year == max(Year)) %>% 
-  rename(YearGINdata = Year) %>%
-  clean_names() %>% 
-  rename("iso_code" = "code")
+  rename(YearGINdata = Year,
+         "iso_code" = "Code") %>%
+  clean_names()
 
 
 
@@ -309,13 +287,12 @@ dici <- iso_codes %>%
         left_join(v, by = "iso_code") %>%
         left_join(y, by = "iso_code") %>%
         left_join(w, by = "iso_code") %>% 
-        rename("names_covid" = "location.x") %>% 
-        rename("names_cpt" = "country_name.x") %>% 
-        rename("names_dmi" = "location.y") %>% 
-        rename("names_gini" = "entity") %>% 
-        rename("names_wjp" = "country_name.y") %>% 
-        rename("names_tests" = "country")
-
+        rename("names_covid" = "location.x",
+               "names_cpt" = "country_name.x",
+               "names_dmi" = "location.y",
+               "names_gini" = "entity",
+               "names_wjp" = "country_name.y",
+               "names_tests" = "country")
 
 ###
 
@@ -379,7 +356,7 @@ junto <- covid %>%
 base_semi <- left_join(junto, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
 
 
-base_semi %>% count(name) %>% view
+base_semi %>% count(name) 
 
 ## anti_join(junto, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### excluimos o dia 31/12/2019
 
@@ -401,8 +378,8 @@ Criando variável que conta quantos dias passaram desde que o país atingiu 1 ca
 marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
   group_by(name) %>% 
-  mutate(rank = min_rank(total_cases_per_million)) %>% 
-  mutate(days_after_1pm = rank(rank, ties.method = "first")) %>% 
+  mutate(rank = min_rank(total_cases_per_million),
+         days_after_1pm = rank(rank, ties.method = "first")) %>% 
   relocate(days_after_1pm, .after = date) %>% 
   ungroup()
 
@@ -425,9 +402,6 @@ rm(base_semi, base_inter, marcador, u, v, w, x, y, z, wjp_2019, giniOWID, iso, d
 Análise descritiva - Democracy Index
 
 ```{r}
-
-
-skim(dmi)
 
 dmi %>%
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
@@ -535,12 +509,10 @@ Análise descritiva - Oxford Covid-19 Government Response Tracker
 
 ```{r}
 
-
-skim(cpt)
-
 #Análise das variáveis "flag", que indicam se as políticas foram específicas ou gerais.
 
 #CANADÁ SEM DADO - PROBLEMA COM NA
+
 cpt %>% 
   select(name, c1_flag: h6_flag, iso_code, iso2) %>% 
   mutate(across(c1_flag: h6_flag, ~ as.numeric(.x))) %>% 
