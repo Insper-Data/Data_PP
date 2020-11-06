@@ -1061,14 +1061,55 @@ base %>%
 b <- base %>% 
   filter(days_after_1pm > 0) 
 
-x <- colnames(b) %>% view()
 
-reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
+
+reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + log(population) + log(gdp_per_capita) + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
 
 summary(reg)
 
 
-reg1 <- lm_robust(total_cases_per_million ~ ., data = subset(b, select=c(-name, -iso_code, -date, -iso2, -confirmed_cases, -total_cases, -new_cases, -total_deaths, -new_deaths, -new_cases_per_million, -confirmed_deaths, -total_deaths_per_million, -`Short-term tests per case`, -`Short-term positive rate`, -`Cumulative total per thousand`, -`7-day smoothed daily change`, -`7-day smoothed daily change per thousand`, -`Daily change in cumulative total per thousand`, -new_deaths_smoothed_per_million, -new_deaths_per_million, -new_cases_smoothed_per_million, -new_deaths_smoothed, -new_cases_smoothed, -`Daily change in cumulative total`)))
+# regredir
+## indice da democria ~ testes
+## usar a regressão como algo para chamar atenção a relações
+
+### binsreg
+
+
+reg2 <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + human_development_index, data = b)
+
+
+summary(reg2)
+
+
+reg3 <- lm(total_cases_per_million ~ `Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + human_development_index, data = b)
+
+
+summary(reg3)
+
+
+
+reg4 <- lm(total_cases_per_million ~ `WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + human_development_index, data = b)
+
+summary(reg4)
+
+
+
+#ver depois
+# 
+# xx <- b %>% select(`Overall Score`) %>% filter(!is.na(`Overall Score`)) %>% head(10000)
+# yy <- b %>% select(`WJP Rule of Law Index: Overall Score`) %>% filter(!is.na(`WJP Rule of Law Index: Overall Score`))%>% head(10000)
+# 
+# 
+# cor(xx, yy)
+# 
+
+
+
+
+
+
+
+reg1 <- lm(total_cases_per_million ~ ., data = subset(b, select=c(-name, -iso_code, -date, -iso2, -confirmed_cases, -total_cases, -new_cases, -total_deaths, -new_deaths, -new_cases_per_million, -confirmed_deaths, -total_deaths_per_million, -`Short-term tests per case`, -`Short-term positive rate`, -`Cumulative total per thousand`, -`7-day smoothed daily change`, -`7-day smoothed daily change per thousand`, -`Daily change in cumulative total per thousand`, -new_deaths_smoothed_per_million, -new_deaths_per_million, -new_cases_smoothed_per_million, -new_deaths_smoothed, -new_cases_smoothed, -`Daily change in cumulative total`, -extreme_poverty )))
            
 tidy(reg1) %>% 
   filter(p.value < 0.05)
@@ -1078,15 +1119,6 @@ summary(reg1)
 
 
 
-reg2 <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + extreme_poverty + human_development_index, data = b)
-
-
-summary(reg2)
-
-
-library(skimr)
-
-skim(b)
 
 
 ```
