@@ -2,8 +2,10 @@
 title: "Projeto Insper Data - Politicas Publicas"
 author: "Bruno, Bernardo e Vinicius"
 date: "14/09/2020"
-output: html_document
-editor_options: 
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -11,13 +13,12 @@ editor_options:
 Packages 
 ```{r}
 
-# library(vctrs)
-# library(skimr)
-# library(rvest)
-# library(ggrepel)
-# library(av)
-# library(RColorBrewer)
-
+library(vctrs)
+library(skimr)
+library(rvest)
+library(ggrepel)
+library(av)
+library(RColorBrewer)
 library(MASS)
 library(tidyverse)
 library(broom)
@@ -69,7 +70,6 @@ Nevertheless, the Gini Index, even with lags in some countries, can be considere
 
 ## Getting the databases
 ```{r}
-
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo"),
          date > "2019-12-31") %>% 
@@ -189,10 +189,10 @@ wjptidy <- wjp_2019 %>%
 # Cleaning the Oxford Covid-19 Response Tracker
 
 
-contador = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) 
+counter = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) 
 # This line of code generates a counter which make it viable to restore data related to the US and UK 
 
-dias = (1: (257 + contador))
+days = (1: (257 + counter))
 
 cpt <- CRT %>% 
   clean_names() %>% 
@@ -206,11 +206,11 @@ cpt <- CRT %>%
 
 us <- cpt %>% 
   filter(country_name == "United States") %>% 
-  slice(dias)
+  slice(days)
 
 uk <- cpt %>% 
   filter(country_name == "United Kingdom") %>% 
-  slice(dias)
+  slice(days)
 
 
 cpt <- cpt %>% 
@@ -346,22 +346,22 @@ wjp_cpt <- left_join(cpt, wjptidy, by = c("iso_code", "name", "region", "iso2"))
 
 # Unifing Our world in Data (Covid) + Our world in data (t) +  Democracy Index (dmi)
 
-junto <- covid %>% 
+together <- covid %>% 
   left_join(dmi, by = c("iso_code", "region", "iso2", "name")) %>% 
   left_join(t, by = c("iso_code", "region", "iso2", "date", "name"))
 
 
-# junto %>% filter(is.na(name)) %>% view ### Taking Kosovo out 
+# together %>% filter(is.na(name)) %>% view ### Taking Kosovo out 
 
 
 # Getting all data together
 
-base_semi <- left_join(junto, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
+base_semi <- left_join(together, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
 
 
 base_semi %>% count(name) 
 
-## anti_join(junto, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### Excluding the 31/12/2019 from the database
+## anti_join(together, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### Excluding the 31/12/2019 from the database
 
 # Unifing the Gini Index with the structured database
 
@@ -463,7 +463,7 @@ p
 
 
 
-# Map Overall Score
+# Map - Overall Score
 
 base %>% 
   select(name, iso_code, iso2, `Overall Score`, date) %>% 
@@ -484,7 +484,7 @@ base %>%
             legend.position = "right")
 
 
-# Map Democracy Types
+# Map - Democracy Types
 
 base %>% 
   select(name, iso_code, type, date, `Overall Score`, iso2) %>% 
@@ -514,83 +514,83 @@ Descriptive Analysis - Oxford Covid-19 Government Response Tracker
 
 ## CANADA DOES NOT HAVE INFORMATION - PROBLEM WITH MISSING DATA ABOUT THE COUNTRY
 
-cpt %>% 
-  select(name, c1_flag: h6_flag, iso_code, iso2) %>% 
-  mutate(across(c1_flag: h6_flag, ~ as.numeric(.x))) %>% 
-  filter(across(everything(), ~ .x >= 0)) %>% view()
-  clean_names() %>% 
-  group_by(name) %>% 
-  summarise(generalismo = mean((c1_flag + 
-         c2_flag + c3_flag + c4_flag + c5_flag +
-         c6_flag + c7_flag + e1_flag + h1_flag)/8), iso2 = iso2) %>%  
-  ungroup() %>% 
-  view()
-  
-  left_join(world, by = c("iso2" = "iso_a2")) %>%  
-  ggplot() +
-   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
-   geom_sf(aes(geometry = geom, fill = generalismo)) +
-  scale_fill_gradient(low = "darkslateblue", high = "seagreen3") +
-   labs(title = "Level of Political Generalism",
-        subtitle = ("Related to Pandemic Policies"),
-        fill = "Index",
-        caption = "Source: Oxford Policy Tracker") +
-   theme_map() +
-    theme(panel.background = element_rect(fill = "#b3d5d0"),
-          legend.position = "right")
-
-
-# Analysis of C8 (International Travel Controls)
-
-base %>% 
-  select(name, c8_international_travel_controls, date, iso_code, iso2) %>% 
-  filter(!is.na(c8_international_travel_controls), date == Sys.Date() - 30) %>%
-  clean_names() %>%
-  left_join(world, by = c("iso2" = "iso_a2")) %>% 
-  ggplot() +
-   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
-   geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
-  scale_fill_gradient(low = "seagreen1", high = "deeppink3", limits = c(1, 4), breaks = seq(1, 4, 1)) +
-   labs(title = "International Travel Controls",
-        subtitle = ("In the beggining of September"),
-        fill = "Index",
-        caption = "Source: Oxford Policy Tracker") +
-   theme_map() +
-    theme(panel.background = element_rect(fill = "#b3d5e0"),
-          legend.position = "right")
-
-# Visual analysis of the correlation between C5 e E1
-
-cpt %>% 
-  select(name, c5_close_public_transport, e1_income_support) %>% 
-  filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>% 
-  group_by(name) %>% 
-  summarise(media_fechamento_transporte = mean(c5_close_public_transport),
-            media_suportederenda = mean(e1_income_support)) %>% 
-  ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
-    geom_point() +
-    geom_smooth(method = lm, se = FALSE) +
-  labs(title = "Scatterplot: C5 and E1")
-  
-# Visual analysis of the correlation between E4 e C8 
-  
-base %>% 
-  select(name, e4_international_support, c8_international_travel_controls, type) %>% 
-  filter(!is.na(e4_international_support), 
-         !is.na(c8_international_travel_controls)) %>% 
-  group_by(name) %>% 
-  summarise(media_log_suporte = log(mean(e4_international_support)),
-            media_controle = mean(c8_international_travel_controls), 
-            tipe = type) %>% 
-  filter(media_log_suporte > 0, !is.na(tipe)) %>% 
-  ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
-    geom_point() +
-    geom_smooth(method = lm, se = FALSE) +
-    theme_clean() +
-   labs(title = "Scatterplot: E4 and C8",
-        x = "Average international travel controls",
-        y = "Log average of international support")
-  
+# cpt %>% 
+#   select(name, c1_flag: h6_flag, iso_code, iso2) %>% 
+#   mutate(across(c1_flag: h6_flag, ~ as.numeric(.x))) %>% 
+#   filter(across(everything(), ~ .x >= 0)) %>% view()
+#   clean_names() %>% 
+#   group_by(name) %>% 
+#   summarise(generalismo = mean((c1_flag + 
+#          c2_flag + c3_flag + c4_flag + c5_flag +
+#          c6_flag + c7_flag + e1_flag + h1_flag)/8), iso2 = iso2) %>%  
+#   ungroup() %>% 
+#   view()
+#   
+#   left_join(world, by = c("iso2" = "iso_a2")) %>%  
+#   ggplot() +
+#    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+#    geom_sf(aes(geometry = geom, fill = generalismo)) +
+#   scale_fill_gradient(low = "darkslateblue", high = "seagreen3") +
+#    labs(title = "Level of Political Generalism",
+#         subtitle = ("Related to Pandemic Policies"),
+#         fill = "Index",
+#         caption = "Source: Oxford Policy Tracker") +
+#    theme_map() +
+#     theme(panel.background = element_rect(fill = "#b3d5d0"),
+#           legend.position = "right")
+# 
+# 
+# # Analysis of C8 (International Travel Controls)
+# 
+# base %>% 
+#   select(name, c8_international_travel_controls, date, iso_code, iso2) %>% 
+#   filter(!is.na(c8_international_travel_controls), date == Sys.Date() - 30) %>%
+#   clean_names() %>%
+#   left_join(world, by = c("iso2" = "iso_a2")) %>% 
+#   ggplot() +
+#    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+#    geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
+#   scale_fill_gradient(low = "seagreen1", high = "deeppink3", limits = c(1, 4), breaks = seq(1, 4, 1)) +
+#    labs(title = "International Travel Controls",
+#         subtitle = ("In the beggining of September"),
+#         fill = "Index",
+#         caption = "Source: Oxford Policy Tracker") +
+#    theme_map() +
+#     theme(panel.background = element_rect(fill = "#b3d5e0"),
+#           legend.position = "right")
+# 
+# # Visual analysis of the correlation between C5 e E1
+# 
+# cpt %>% 
+#   select(name, c5_close_public_transport, e1_income_support) %>% 
+#   filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>% 
+#   group_by(name) %>% 
+#   summarise(media_fechamento_transporte = mean(c5_close_public_transport),
+#             media_suportederenda = mean(e1_income_support)) %>% 
+#   ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
+#     geom_point() +
+#     geom_smooth(method = lm, se = FALSE) +
+#   labs(title = "Scatterplot: C5 and E1")
+#   
+# # Visual analysis of the correlation between E4 e C8 
+#   
+# base %>% 
+#   select(name, e4_international_support, c8_international_travel_controls, type) %>% 
+#   filter(!is.na(e4_international_support), 
+#          !is.na(c8_international_travel_controls)) %>% 
+#   group_by(name) %>% 
+#   summarise(media_log_suporte = log(mean(e4_international_support)),
+#             media_controle = mean(c8_international_travel_controls), 
+#             tipe = type) %>% 
+#   filter(media_log_suporte > 0, !is.na(tipe)) %>% 
+#   ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
+#     geom_point() +
+#     geom_smooth(method = lm, se = FALSE) +
+#     theme_clean() +
+#    labs(title = "Scatterplot: E4 and C8",
+#         x = "Average international travel controls",
+#         y = "Log average of international support")
+#   
 
 ```
 
@@ -599,7 +599,7 @@ base %>%
 # Descriptive Analysis of the World Justice Project Rule of Law 2019 database
 
 
-1) Group countries according to their income group and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the product level and the local institutional strength
+1) Grouping countries according to their income group and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the product level and the local institutional strength
 ```{r}
 
 # Table
@@ -624,14 +624,13 @@ wjp_income %>%
 
 
 
-2) Group countries according to the region and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the local institutional strength and the regions of the map
+2) Grouping countries according to the region and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the local institutional strength and the regions of the map
 ```{r}
 
 wjp_region <- wjptidy %>% 
   group_by(Region) %>% 
   summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
 
-brewer.pal.info
 
 wjp_region %>%                          
   arrange(`WJP Rule of Law Index: Overall Score`) %>%                                
@@ -674,7 +673,7 @@ base %>%
 
 
 
-4) Estudar a relação entre as médias do Fator 1 (Constraints on Government Powers) e do Fator 6 (Regulatory Enforcement)
+4) Studying the relationship between the average of Factor 1 (Constraints on Government Powers) and the average of Factor 6 (Regulatory Enforcement)
 ```{r}
 
 base %>% 
@@ -695,7 +694,7 @@ base %>%
 
 ```
 
-5) Construir um mapa com a média do fator 6
+5) Map with the average value of the Factor 6 variable
 
 ```{r}
 
@@ -724,7 +723,7 @@ mapfactor6
 ```
 
 
-6)Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o Fator 2 (Absence of Corruption)
+6) Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o Fator 2 (Absence of Corruption)
 ```{r}
 
 wjptidy %>% 
@@ -744,7 +743,7 @@ wjptidy %>%
 
 
 
-7) Estudar a relação entre as médias do Fator 5 (Order and Security) e do Fator 6 (Regulatory Enforcement)
+7) Studying the relationship between the averages of Factor 5 (Order and Security) and Factor 6 (Regulatory Enforcement)
 ```{r}
 
 wjptidy %>% 
@@ -762,9 +761,9 @@ wjptidy %>%
 
 ```
 
-#Entre as bases
+#Between databases
 
-8) Relação entre o Overall Score do WJP e o Democracy Index, da The Economist
+8) Studying the relationship between the Overall Score of the WJP Rule of Law and The Economist's Democracy Index
 ```{r}
 
 
@@ -793,7 +792,7 @@ base %>%
 ```
 
 
-9)Relação entre a variável 3.3 (Civil Participation) do WJP e o Democracy Index, da The Economist
+9) Studying the relationship between the 3.3 variable (Civil Participation) of WJP and The Economist's Democracy Index
 
 ```{r}
 
@@ -821,7 +820,7 @@ rm(gen_names_2)
 
 ```
 
-10)Relação entre o fator 2 (Absence of Corruption) do WJP e o Democracy Index, da The Economist
+10) Studying the relationship between Factor 2 (Absence of Corruption) of WJP and The Economist's Democracy Index
 
 ```{r}
 
@@ -849,7 +848,7 @@ rm(gen_names_3)
 
 ```
 
-11)Relação entre a média do Fator 6 e as taxas populacionais de falecimento e de casos totais por COVID-19
+11) Studying the relationship between the averages of Factor 6 e and the rates of death and total cases related to Covid-19 
 
 ```{r}
 
@@ -857,7 +856,8 @@ gen_names_4 <- base %>%
   filter(!is.na(`Factor 6: Regulatory Enforcement`), !is.na(total_cases_per_million), 
          !is.na(total_deaths_per_million), days_after_1pm == 100)
 
-#Usar datas comparáveis (days_after_1pm)
+# Using compatible information (days_after_1pm)
+
 base %>% 
   select(name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
   filter(days_after_1pm == 100) %>% 
@@ -892,7 +892,7 @@ base %>%
 
 ```
 
-12B)Relação animada conforme dias após o marco 1 morte por milhão
+12B) Previous analysis, animated using a gif and the time variable "days_after_1pm"
 
 ```{r}
 p11 <- base %>% 
@@ -1091,34 +1091,4 @@ summary(reg3)
 reg4 <- lm(total_cases_per_million ~ `WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + human_development_index, data = b)
 
 summary(reg4)
-
-
-
-#ver depois
-# 
-# xx <- b %>% select(`Overall Score`) %>% filter(!is.na(`Overall Score`)) %>% head(10000)
-# yy <- b %>% select(`WJP Rule of Law Index: Overall Score`) %>% filter(!is.na(`WJP Rule of Law Index: Overall Score`))%>% head(10000)
-# 
-# 
-# cor(xx, yy)
-# 
-
-
-
-
-
-
-
-reg1 <- lm(total_cases_per_million ~ ., data = subset(b, select=c(-name, -iso_code, -date, -iso2, -confirmed_cases, -total_cases, -new_cases, -total_deaths, -new_deaths, -new_cases_per_million, -confirmed_deaths, -total_deaths_per_million, -`Short-term tests per case`, -`Short-term positive rate`, -`Cumulative total per thousand`, -`7-day smoothed daily change`, -`7-day smoothed daily change per thousand`, -`Daily change in cumulative total per thousand`, -new_deaths_smoothed_per_million, -new_deaths_per_million, -new_cases_smoothed_per_million, -new_deaths_smoothed, -new_cases_smoothed, -`Daily change in cumulative total`, -extreme_poverty )))
-           
-tidy(reg1) %>% 
-  filter(p.value < 0.05)
-
-summary(reg1)
-
-
-
-
-
-
 ```
