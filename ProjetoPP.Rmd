@@ -385,13 +385,6 @@ marcador <- base_inter %>%
   relocate(days_after_1pm, .after = date) %>% 
   ungroup()
 
-#Alternativa
-#group_by(country_name) %>%
-#arrange(date) %>%
-#mutate(rank = row_number()) %>% 
-#ungroup()
-
-
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
 
@@ -723,7 +716,7 @@ mapfactor6
 ```
 
 
-6) Estudar a relação entre a variável 7.3 (Civil Justice is free of discrimination) e o Fator 2 (Absence of Corruption)
+6) Studying the relationship between the averages of Factor 2 (Absence of Corruption) and variable 7.3 (Civil Justice is free of discrimination)
 ```{r}
 
 wjptidy %>% 
@@ -872,13 +865,15 @@ base %>%
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   labs(title = "Regulatory enforcement and COVID-19 cases/million plot", 
-       subtitle = ("Mid September"))
+       subtitle = ("Mid September")) +
+  theme_clean()
        
 rm(gen_names_4)
 
 ```
 
-12)Relação entre o Fator 4 (Fundamental Rights) e a variável C6 (Stay at home requirements) do Oxford Response Tracker
+12) Studying the relationship between the averages of Factor 4 and 6, from the Oxford Response Tracker 
+
 
 ```{r}
 
@@ -888,7 +883,8 @@ base %>%
          !is.na(c6_stay_at_home_requirements)) %>% 
   ggplot(mapping = aes(group = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
   geom_boxplot() +
-  labs(title = "Fundamental Rights and Stay at home requirements", x = "Stay at home requirements")
+  labs(title = "Fundamental Rights and Stay at home requirements", x = "Stay at home requirements") +
+  theme_classic()
 
 ```
 
@@ -913,7 +909,7 @@ animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
 
 ```
 
-13) Comparar o mapa com a média do Fator 6 com o mapa com dados da Covid-19, controlando os dados pelo tamanho populacional
+13) Comparing the map with the average of Factor 6 and the map with Covid-19 data, controlling by population size
 
 ```{r}
 
@@ -1028,6 +1024,15 @@ base %>%
   coord_flip() +
   theme_classic()
 
+base %>% 
+  select(name, days_after_1pm, date) %>% 
+  group_by(name)%>% 
+  slice(which.max(days_after_1pm)) %>% 
+  ungroup() %>% 
+  select(days_after_1pm) %>% 
+  ggplot(aes(days_after_1pm)) +
+  geom_histogram() +
+  theme_classic()
 
 ```
 
