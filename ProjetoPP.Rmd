@@ -31,7 +31,7 @@ library(sf)
 library(ggthemes)
 library(spData)
 library(estimatr)
-
+library(binsreg)
 
 ```
 
