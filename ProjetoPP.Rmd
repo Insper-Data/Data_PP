@@ -1068,6 +1068,7 @@ b <- base %>%
 
 
 
+
 reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + log(population) + log(gdp_per_capita) + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
 
 summary(reg)
@@ -1096,4 +1097,16 @@ summary(reg3)
 reg4 <- lm(total_cases_per_million ~ `WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + human_development_index, data = b)
 
 summary(reg4)
+
+b2 <- base %>% 
+  filter(days_after_1pm > 0) %>% 
+  group_by(name)%>% 
+  slice(which.max(days_after_1pm)) %>% 
+  ungroup() 
+
+reg5 <- lm(total_cases_per_million ~ `Overall Score` + `WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + human_development_index, data = b2)
+
+summary(reg5)
+
+
 ```
