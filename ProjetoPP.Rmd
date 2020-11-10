@@ -72,14 +72,21 @@ covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %
   filter(!location %in% c("International", "World","Kosovo"),
          date > "2019-12-31") %>% 
   select(-stringency_index)
+
 tests <- read_csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv")
+
 CRT <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
+
 wjp_2019 <- read_excel("FINAL_2020_wjp_rule_of_law_index_HISTORICAL.xlsx", 
                         sheet = "WJP ROL Index 2019 Scores") 
+
 democracy <- read_excel("EIU-Democracy Indices - Dataset - v3.xlsx", 
     sheet = "input-data-from-EIU-recentyrs", skip = 176)
+
 colnames(democracy)[1] <- "location"
+
 giniOWID <- read_csv("economic-inequality-gini-index.csv")
+
 iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv") %>% 
    transmute(code = as.numeric(`country-code`),
              name,
@@ -87,6 +94,7 @@ iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countrie
              region,
              iso2 = `alpha-2`) %>% 
   clean_names()
+
 ```
 
 
@@ -99,15 +107,19 @@ t <- tests %>%
   select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
   rename(date = Date, iso_code = "ISO code") 
+
 df1 <- t %>% 
     filter(country %in% c("Singapore", "Poland", "Italy", "India", "France") & escala !=  "people tested")
+
 df2 <- t %>%
     filter(country %in% c("United States", "Japan") & escala == "tests performed")
   
 t <- t %>% 
     anti_join(df1) %>% 
     anti_join(df2)
+
 # Arranging iso to join in the DMI
+
 iso <- iso_codes %>% 
   mutate(across(where(is.character), ~ str_remove_all(.x, "(?<=United Kingdom).+")),
          across(where(is.character), ~ str_replace_all(.x, "Korea, Republic of", "South Korea")),
@@ -125,13 +137,17 @@ iso <- iso_codes %>%
          across(where(is.character), ~ str_remove_all(.x, "(?<=.)\\s\\(.+")),
          across(where(is.character), ~ str_remove_all(.x, "(?<=.)\\,\\s.+")),
          across(where(is.character), ~ str_replace_all(.x, "(?<!.)Congo(?!,)", "Congo (Brazzaville)")))
+
 # Checking if the changes are correct
+
 democracy %>% 
         filter(!is.na(location)) %>% 
         mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`),
                Rank = str_remove(Rank, "[=]$")) %>% 
         anti_join(iso, by = c("location" = "name"))
+
 # Cleaning DMI 
+
 dmi <- democracy %>% 
         filter(!is.na(location)) %>% 
         mutate(`Electoral process and pluralism` = as.double(`Electoral process and pluralism`), 
@@ -144,7 +160,9 @@ dmi <- democracy %>%
                       Rank >= 23 & Rank <= 75 ~ "Flawed democracy",
                       Rank >= 77 & Rank <= 113 ~ "Hybrid regime",
                       Rank >= 114 ~ "Authoritarian regime"))
+
 # Cleaning the World Justice Project database (Institutions)
+
 wjptidy <- wjp_2019 %>% 
   pivot_longer(-Country, names_to = "Countries", values_to = "Countries Codes") %>%
   pivot_wider(id_cols = c("Countries", "Countries Codes"), 
@@ -152,9 +170,13 @@ wjptidy <- wjp_2019 %>%
   select(-6) %>% 
   rename(iso_code = "Country Code", country_name = "Countries") %>% 
   mutate(across(`WJP Rule of Law Index: Overall Score`:`8.7. Due process of the law and rights of the accused`, ~ as.numeric(.x)))
+
 # Cleaning the Oxford Covid-19 Response Tracker
+
 counter = round(as.numeric(difftime(Sys.Date(), "2020-09-13", units = "days"))) 
+
 # This line of code generates a counter which make it viable to restore data related to the US and UK 
+
 days = (1: (257 + counter))
 cpt <- CRT %>% 
   clean_names() %>% 
@@ -163,20 +185,25 @@ cpt <- CRT %>%
   select(- c(region_name, region_code)) %>% 
   relocate(confirmed_cases, .after = country_name) %>% 
   filter(iso_code != "RKS") 
+
 # We opted to desconsider Kosovo, as the country didn't have any information in any of the other databases. Still, we believe that such decision won't change our conclusions in any significant way.
   
 us <- cpt %>% 
   filter(country_name == "United States") %>% 
   slice(days)
+
 uk <- cpt %>% 
   filter(country_name == "United Kingdom") %>% 
   slice(days)
+
 cpt <- cpt %>% 
   filter(country_name != "United States" & iso_code != "USA",
          country_name != "United Kingdom" & iso_code != "GBR") %>% 
   bind_rows(us) %>% 
   bind_rows(uk)
+
 # Cleaning the Gini Index Database
+
 giniOWIDlatest <- giniOWID %>% 
   group_by(Entity) %>% 
   filter(Year == max(Year)) %>% 
@@ -195,27 +222,38 @@ x <- cpt %>%
 ###
 y <- wjptidy %>% 
   select(country_name, iso_code)
+
 x %>% anti_join(y, by = "iso_code") 
+
 ###
 z <- covid %>% 
   select(location, iso_code) %>% 
   unique() %>% 
   clean_names()
+
 z %>% anti_join(y, by = "iso_code") 
+
 ###
 w <- t %>% 
   select(country, iso_code) %>% 
   unique()
+
 ###
 y %>% anti_join(w, by = "iso_code") 
+
 v <- giniOWIDlatest %>% 
   select(entity, iso_code)
+
 v %>% anti_join(w, by = "iso_code") 
+
 ###
 u <- dmi %>% 
   select(location, iso_code)
+
 u %>% anti_join(w, by = "iso_code") 
+
 #### Making the dictionary ####
+
 dici <- iso_codes %>% 
         left_join(z, by = "iso_code") %>% 
         left_join(x, by = "iso_code") %>%
@@ -229,48 +267,67 @@ dici <- iso_codes %>%
                "names_gini" = "entity",
                "names_wjp" = "country_name.y",
                "names_tests" = "country")
+
 ###
+
 covid <- dici %>% 
   select(name:names_covid) %>% 
   right_join(covid, by = "iso_code") %>% 
   select(-continent, -location)
+
 wjptidy <- dici %>% 
   select(name:iso2, names_wjp) %>% 
   right_join(wjptidy, by = "iso_code") %>% 
   select(-country_name)
+
 cpt <- dici %>% 
   select(name:iso2, names_cpt) %>% 
   right_join(cpt, by = "iso_code") %>% 
   select(-country_name)
+
 t <- dici %>% 
   select(name:iso2, names_tests) %>% 
   right_join(t, by = "iso_code") %>% 
   select(-country)
+
 giniOWIDlatest <- dici %>% 
   select(name:iso2, names_gini) %>% 
   right_join(giniOWIDlatest, by = "iso_code") %>% 
   select(-entity)
+
 dmi <- dici %>% 
   select(name:iso_code) %>% 
   right_join(dmi, by = "iso_code")
+
 ```
 
 
 ## Structuring a unified database (Our database)
 ```{r}
 # Unifing the World Justice Project Rule of Law with CPT
+
 wjp_cpt <- left_join(cpt, wjptidy, by = c("iso_code", "name", "region", "iso2"))
+
 # wjp_cpt %>% filter(is.na(name)) %>% view #### Kosovo does not appear in any database, other than CPT
+
 # Unifing Our world in Data (Covid) + Our world in data (t) +  Democracy Index (dmi)
+
 together <- covid %>% 
   left_join(dmi, by = c("iso_code", "region", "iso2", "name")) %>% 
   left_join(t, by = c("iso_code", "region", "iso2", "date", "name"))
+
 # together %>% filter(is.na(name)) %>% view ### Taking Kosovo out 
+
 # Getting all data together
+
 base_semi <- left_join(together, wjp_cpt, by = c("iso_code", "region", "iso2", "date", "name"))
+
 base_semi %>% count(name) 
+
 ## anti_join(together, wjp_cpt,  by = c("iso_code", "region", "iso2", "date", "name")) %>% view #### Excluding the 31/12/2019 from the database
+
 # Unifing the Gini Index with the structured database
+
 base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", "iso2", "name")) %>% 
   select(!(m1_wildcard))
 ```
@@ -287,8 +344,10 @@ marcador <- base_inter %>%
          days_after_1pm = rank(rank, ties.method = "first")) %>% 
   relocate(days_after_1pm, .after = date) %>% 
   ungroup()
+
 base <- left_join(base_inter, marcador) %>% 
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
+
 rm(base_semi, base_inter, marcador, u, v, w, x, y, z, wjp_2019, giniOWID, iso, df1, df2, CRT, democracy)
 ```
 
@@ -301,19 +360,23 @@ dmi %>%
   geom_col() +
   coord_flip() +
   theme_clean()
+
 dmi %>%
   filter(`Overall Score` > 6) %>% 
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
   coord_flip() +
   theme_clean()
+
 dmi %>%
   filter(`Overall Score` < 6) %>% 
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
   coord_flip() +
   theme_clean()
+
 # Barplot in a circle
+
 empty_bar <- 4
 to_add <- data.frame(matrix(NA, empty_bar*nlevels(dmi$type), ncol(dmi)) )
 colnames(to_add) <- colnames(dmi)
@@ -336,15 +399,16 @@ p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill = type)) +
     axis.text = element_blank(),
     axis.title = element_blank(),
     panel.grid = element_blank(),
-    plot.margin = unit(rep(-2,4), "cm") 
-  ) +
+    plot.margin = unit(rep(-2,4), "cm")) +
   coord_polar() + 
   geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label = name, hjust = hjust), color = "black", fontface = "bold",alpha=0.6,
             size = 2.5, angle = label_data$angle, inherit.aes = FALSE ) +
   labs(title = "Democracy Index")
  
 p
+
 # Map - Overall Score
+
 base %>% 
   select(name, iso_code, iso2, `Overall Score`, date) %>% 
   filter(!is.na(`Overall Score`), date == Sys.Date() - 1) %>%
@@ -362,7 +426,9 @@ base %>%
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "right")
+
 # Map - Democracy Types
+
 base %>% 
   select(name, iso_code, type, date, `Overall Score`, iso2) %>% 
   filter(!is.na(type), date == Sys.Date() - 1) %>%
@@ -378,6 +444,7 @@ base %>%
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
           legend.position = "right")
+
 ```
 
 
@@ -472,12 +539,14 @@ Descriptive Analysis - Oxford Covid-19 Government Response Tracker
 
 1) Grouping countries according to their income group and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the product level and the local institutional strength
 ```{r}
+
 # Table
 wjp_income <- wjptidy %>% 
   group_by(`Income Group`) %>% 
   summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`)) %>% 
   arrange(`WJP Rule of Law Index: Overall Score`) %>% 
   view()
+
 # Column Graph
 wjp_income %>%                          
   arrange(`WJP Rule of Law Index: Overall Score`) %>%                                
@@ -487,12 +556,14 @@ wjp_income %>%
   scale_fill_brewer(palette = "RdYlGn") +
   theme_classic() +
   ggtitle("Income and WJP Overall Score")
+
 ```
 
 
 
 2) Grouping countries according to the region and analyze, in general, the average score of the WJP Index, aiming to obtain some relation between the local institutional strength and the regions of the map
 ```{r}
+
 wjp_region <- wjptidy %>% 
   group_by(Region) %>% 
   summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`))
@@ -504,11 +575,13 @@ wjp_region %>%
   scale_fill_brewer(palette = "Set1") +
   theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
   ggtitle("Region and WJP Overall Score")
+
 ```
 
 3) Map with the WJP Overall Score
 
 ```{r}
+
 base %>% 
   select(name, iso_code, iso2, `WJP Rule of Law Index: Overall Score`, date) %>% 
   mutate(`WJP Rule of Law Index: Overall Score` = 10*`WJP Rule of Law Index: Overall Score`) %>% 
@@ -527,12 +600,14 @@ base %>%
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "right")
+
 ```
 
 
 
 4) Studying the relationship between the average of Factor 1 (Constraints on Government Powers) and the average of Factor 6 (Regulatory Enforcement)
 ```{r}
+
 base %>% 
   select(name, type, iso_code, `Factor 1: Constraints on Government Powers`, `Factor 6: Regulatory Enforcement`) %>%
   mutate(type = factor(type, levels = c("Authoritarian regime", "Hybrid regime","Flawed democracy", "Full democracy"))) %>% 
@@ -547,11 +622,13 @@ base %>%
                    segment.color = 'grey50') +
   theme_clean() +
   ggtitle("Regulatory Enforcement and Constrantis on Government Powers  -  WJP")
+
 ```
 
 5) Map with the average value of the Factor 6 variable
 
 ```{r}
+
 mapfactor6 <- base %>% 
   select(name, iso_code, iso2, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
   mutate(`Factor 6: Regulatory Enforcement` = 10*`Factor 6: Regulatory Enforcement`) %>% 
@@ -571,12 +648,15 @@ mapfactor6 <- base %>%
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "right") 
+
 mapfactor6
+
 ```
 
 
 6) Studying the relationship between the averages of Factor 2 (Absence of Corruption) and variable 7.3 (Civil Justice is free of discrimination)
 ```{r}
+
 wjptidy %>% 
   select(name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
@@ -589,12 +669,14 @@ wjptidy %>%
                    segment.color = 'grey50') +
   theme_classic() +
   ggtitle("Civil Justice is free of discrimination and Absence of Corruption - WJP")
+
 ```
 
 
 
 7) Studying the relationship between the averages of Factor 5 (Order and Security) and Factor 6 (Regulatory Enforcement)
 ```{r}
+
 wjptidy %>% 
   select(name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
@@ -607,15 +689,18 @@ wjptidy %>%
                    segment.color = 'grey50') +
   theme_classic() +
   ggtitle("Order and Security and Regulatory Enforcement - WJP")
+
 ```
 
 #Between databases
 
 8) Studying the relationship between the Overall Score of the WJP Rule of Law and The Economist's Democracy Index
 ```{r}
+
 x <- base %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`), days_after_1pm == 30)
+
 base %>% 
   select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm) %>% 
   filter(days_after_1pm == 30) %>% 
@@ -632,6 +717,7 @@ base %>%
                    segment.color = 'grey50') +
   theme_clean() +
   labs(title = "WJP and Democracy Index: Overall Scores")
+
 ```
 
 
@@ -641,6 +727,7 @@ base %>%
 gen_names_2 <- base %>% 
   filter(!is.na(`3.3 Civic participation`), 
          !is.na(`Overall Score`), days_after_1pm == 30)
+
 base %>% 
   select(name, iso_code, `3.3 Civic participation`, `Overall Score`, days_after_1pm) %>% 
   filter(days_after_1pm == 30) %>% 
@@ -656,6 +743,7 @@ base %>%
                    segment.color = 'grey50') +
   theme_clean() +
   labs(title = "Overall Score and Civic Participation")
+
 rm(gen_names_2)
 ```
 
@@ -665,6 +753,7 @@ rm(gen_names_2)
 gen_names_3 <- base %>% 
   filter(!is.na(`Factor 2: Absence of Corruption`), 
          !is.na(`Overall Score`), days_after_1pm == 30)
+
 base %>% 
   select(name, iso_code, `Factor 2: Absence of Corruption`, `Overall Score`, days_after_1pm) %>% 
   filter(days_after_1pm == 30) %>% 
@@ -680,6 +769,7 @@ base %>%
                    segment.color = 'grey50') +
   theme_clean() +
   labs(title = "Overall Score and Absence of Corruption")
+
 rm(gen_names_3)
 ```
 
@@ -689,6 +779,7 @@ rm(gen_names_3)
 gen_names_4 <- base %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), !is.na(total_cases_per_million), 
          !is.na(total_deaths_per_million), days_after_1pm == 100)
+
 # Using compatible information (days_after_1pm)
 base %>% 
   select(name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
@@ -714,6 +805,7 @@ rm(gen_names_4)
 
 
 ```{r}
+
 base %>% 
   select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
@@ -722,11 +814,13 @@ base %>%
   geom_boxplot() +
   labs(title = "Fundamental Rights and Stay at home requirements", x = "Stay at home requirements") +
   theme_classic()
+
 ```
 
 12B) Previous analysis, animated using a gif and the time variable "days_after_1pm"
 
 ```{r}
+
 p11 <- base %>% 
   select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
@@ -736,14 +830,17 @@ p11 <- base %>%
   geom_smooth(method = lm, se = FALSE) +
   theme_classic() +
   labs(x = "Stay at home requirements")
+
 anim11 <- p11 + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}")
+
 animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
 ```
 
 13) Comparing the map with the average of Factor 6 and the map with Covid-19 data, controlling by population size
 
 ```{r}
+
 mapcovid <- base %>% 
   select(name, iso_code, iso2, total_deaths_per_million, days_after_1pm) %>% 
   filter(!is.na(total_deaths_per_million), days_after_1pm == 200) %>%
@@ -762,8 +859,10 @@ mapcovid <- base %>%
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "right") 
+
 mapfactor6
 mapcovid
+
 ```
 
 
@@ -773,10 +872,13 @@ mapcovid
 1) Total cases per million x Gini Index
 
 ```{r}
+
 #Calculating the quartiles
+
 base %>% 
   filter(days_after_1pm == 1) %>% 
   summarize(qs = quantile(population, c(0.33, 0.66)), prob = c(0.33, 0.66))
+
 #Graph
   
 base %>% 
@@ -791,6 +893,7 @@ base %>%
   labs(x = "Gini Index", 
        y = "Total cases per million", 
        title = "Inequality and Covid cases")
+
 #Animation
   
 gtc <- base %>% 
@@ -808,14 +911,18 @@ gtc <- base %>%
   labs(x = "Gini Index", 
        y = "Log (Total cases per million)",
        subtitle = "Divided by population size")
+
 anim_gtc <- gtc + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}") +
   ease_aes('linear')
+
 animate(anim_gtc, renderer = gifski_renderer("gifGTC.gif"))
+
 base %>% filter(days_after_1pm == 1) %>% 
   arrange(population) %>% 
   ggplot(aes(name, population)) +
   geom_col()
+
 base %>%
   ggplot(aes(x = reorder(iso_code, population), population)) + 
   geom_col() +
@@ -826,6 +933,7 @@ base %>%
 2) Days Distribution
 
 ```{r}
+
 base %>% 
   select(name, days_after_1pm, date) %>% 
   group_by(name)%>% 
@@ -836,6 +944,7 @@ base %>%
   geom_col() +
   coord_flip() +
   theme_classic()
+
 base %>% 
   select(name, days_after_1pm, date) %>% 
   group_by(name)%>% 
@@ -870,6 +979,7 @@ base %>%
 
 ##Regressions and tests
 ```{r}
+
 b <- base %>% 
   filter(days_after_1pm > 0) 
 reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + log(population) + log(gdp_per_capita) + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
