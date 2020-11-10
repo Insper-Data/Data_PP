@@ -1,2 +1,2 @@
 # Data_PP
-Pesquisa sobre a relação entre o ambiente institucional de diferentes países e a eficiência das medidas de contenção da pandemia, no que se refere a políticas públicas
+Pesquisa sobre a relação entre o ambiente institucional de diferentes países e a eficiência das medidas de contenção da pandemia, no que se refere a políticas públicas. O código contendo o método da organização (tidy) das bases e a criação de uma base unificada está identificado como "ProjetoPP". A base unificada de dados de COVID-19 dos países (Our World in Data), testes (OWID), Oxford Government Response Tracker, World Justice Project 2019 e Índice de Gini pronta se encontra na pasta "bases" com o nome "base" em formato .csv
