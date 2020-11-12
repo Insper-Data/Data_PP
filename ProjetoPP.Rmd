@@ -452,84 +452,87 @@ Descriptive Analysis - Oxford Covid-19 Government Response Tracker
 
 ```{r}
 # Analysis of the "flag" variables, which indicate if the public politics related to Covid have been specific to regions and counties or general to the entire country.
-## CANADA DOES NOT HAVE INFORMATION - PROBLEM WITH MISSING DATA ABOUT THE COUNTRY
-# cpt %>% 
-#   select(name, c1_flag: h6_flag, iso_code, iso2) %>% 
-#   mutate(across(c1_flag: h6_flag, ~ as.numeric(.x))) %>% 
-#   filter(across(everything(), ~ .x >= 0)) %>% view()
-#   clean_names() %>% 
-#   group_by(name) %>% 
-#   summarise(generalismo = mean((c1_flag + 
-#          c2_flag + c3_flag + c4_flag + c5_flag +
-#          c6_flag + c7_flag + e1_flag + h1_flag)/8), iso2 = iso2) %>%  
-#   ungroup() %>% 
-#   view()
-#   
-#   left_join(world, by = c("iso2" = "iso_a2")) %>%  
-#   ggplot() +
-#    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
-#    geom_sf(aes(geometry = geom, fill = generalismo)) +
-#   scale_fill_gradient(low = "darkslateblue", high = "seagreen3") +
-#    labs(title = "Level of Political Generalism",
-#         subtitle = ("Related to Pandemic Policies"),
-#         fill = "Index",
-#         caption = "Source: Oxford Policy Tracker") +
-#    theme_map() +
-#     theme(panel.background = element_rect(fill = "#b3d5d0"),
-#           legend.position = "right")
-# 
-# 
-# # Analysis of C8 (International Travel Controls)
-# 
-# base %>% 
-#   select(name, c8_international_travel_controls, date, iso_code, iso2) %>% 
-#   filter(!is.na(c8_international_travel_controls), date == Sys.Date() - 30) %>%
-#   clean_names() %>%
-#   left_join(world, by = c("iso2" = "iso_a2")) %>% 
-#   ggplot() +
-#    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
-#    geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
-#   scale_fill_gradient(low = "seagreen1", high = "deeppink3", limits = c(1, 4), breaks = seq(1, 4, 1)) +
-#    labs(title = "International Travel Controls",
-#         subtitle = ("In the beggining of September"),
-#         fill = "Index",
-#         caption = "Source: Oxford Policy Tracker") +
-#    theme_map() +
-#     theme(panel.background = element_rect(fill = "#b3d5e0"),
-#           legend.position = "right")
-# 
-# # Visual analysis of the correlation between C5 e E1
-# 
-# cpt %>% 
-#   select(name, c5_close_public_transport, e1_income_support) %>% 
-#   filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>% 
-#   group_by(name) %>% 
-#   summarise(media_fechamento_transporte = mean(c5_close_public_transport),
-#             media_suportederenda = mean(e1_income_support)) %>% 
-#   ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
-#     geom_point() +
-#     geom_smooth(method = lm, se = FALSE) +
-#   labs(title = "Scatterplot: C5 and E1")
-#   
-# # Visual analysis of the correlation between E4 e C8 
-#   
-# base %>% 
-#   select(name, e4_international_support, c8_international_travel_controls, type) %>% 
-#   filter(!is.na(e4_international_support), 
-#          !is.na(c8_international_travel_controls)) %>% 
-#   group_by(name) %>% 
-#   summarise(media_log_suporte = log(mean(e4_international_support)),
-#             media_controle = mean(c8_international_travel_controls), 
-#             tipe = type) %>% 
-#   filter(media_log_suporte > 0, !is.na(tipe)) %>% 
-#   ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
-#     geom_point() +
-#     geom_smooth(method = lm, se = FALSE) +
-#     theme_clean() +
-#    labs(title = "Scatterplot: E4 and C8",
-#         x = "Average international travel controls",
-#         y = "Log average of international support")
-#   
+
+cpt %>%
+  select(name, c1_flag,  c2_flag, c3_flag, c4_flag, 
+         c5_flag, c6_flag, c7_flag, e1_flag, h1_flag, 
+         h6_flag, iso_code, iso2) %>% 
+  clean_names() %>% 
+  group_by(name) %>% 
+  mutate(generalismo = mean(c(c1_flag, c2_flag, c3_flag, 
+                              c4_flag, c5_flag, c6_flag, 
+                              c7_flag, e1_flag, h1_flag, h6_flag), na.rm = TRUE), 
+         generalismo = mean(generalismo, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>%
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = generalismo)) +
+   scale_fill_gradient(low = "chartreuse1", high = "orange") +
+   labs(title = "Level of Political Generalism",
+        subtitle = ("Related to Pandemic Policies"),
+        fill = "1 = Completely General Policies",
+        caption = "Source: Oxford Policy Tracker") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5d0"),
+          legend.position = "right")
+
+
+
+# Analysis of C8 (International Travel Controls)
+
+base %>%
+  select(name, c8_international_travel_controls, date, iso_code, iso2) %>%
+  filter(!is.na(c8_international_travel_controls), date == Sys.Date() - 30) %>%
+  clean_names() %>%
+  left_join(world, by = c("iso2" = "iso_a2")) %>%
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = c8_international_travel_controls)) +
+  scale_fill_gradient(low = "seagreen1", 
+                      high = "deeppink3", 
+                      limits = c(1, 4), 
+                      breaks = seq(1, 4, 1)) +
+   labs(title = "International Travel Controls",
+        subtitle = ("In the beggining of September"),
+        fill = "Index",
+        caption = "Source: Oxford Policy Tracker") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+          legend.position = "right")
+
+# Visual analysis of the correlation between C5 e E1
+
+cpt %>%
+  select(name, c5_close_public_transport, e1_income_support) %>%
+  filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>%
+  group_by(name) %>%
+  summarise(media_fechamento_transporte = mean(c5_close_public_transport),
+            media_suportederenda = mean(e1_income_support)) %>%
+  ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
+    geom_point() +
+    geom_smooth(method = lm, se = FALSE) +
+  labs(title = "Scatterplot: C5 and E1")
+
+# Visual analysis of the correlation between E4 e C8
+
+base %>%
+  select(name, e4_international_support, c8_international_travel_controls, type) %>%
+  filter(!is.na(e4_international_support),
+         !is.na(c8_international_travel_controls)) %>%
+  group_by(name) %>%
+  summarise(media_log_suporte = log(mean(e4_international_support)),
+            media_controle = mean(c8_international_travel_controls),
+            tipe = type) %>%
+  filter(media_log_suporte > 0, !is.na(tipe)) %>%
+  ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
+    geom_point() +
+    geom_smooth(method = lm, se = FALSE) +
+    theme_clean() +
+   labs(title = "Scatterplot: E4 and C8",
+        x = "Average international travel controls",
+        y = "Log average of international support")
+
 ```
 
 
