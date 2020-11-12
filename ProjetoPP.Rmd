@@ -1120,12 +1120,12 @@ x <- binsreg(b$total_cases_per_million, b$gini_index_world_bank_estimate, w = b$
 
 summary(x)
 
-x <- runif(500)
+x2 <- binsreg(b$total_cases_per_million, b$`Overall Score`, w = b$gini_index_world_bank_estimate)
 
-y <- sin(x)+rnorm(500)
+summary(x2)
 
+x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b$gini_index_world_bank_estimate)
 
-binsreg(y,x)
-
+summary(x3)
 ```
 
