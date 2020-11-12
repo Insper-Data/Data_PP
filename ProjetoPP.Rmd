@@ -557,11 +557,11 @@ cpt %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = generalismo)) +
-   scale_fill_gradient(low = "chartreuse1", high = "orange") +
-   labs(title = "Level of Political Generalism",
+   scale_fill_gradient(low = "chartreuse1", high = "coral") +
+   labs(title = "Level of Political Generalism (Geographic Scope)",
         subtitle = ("Related to Pandemic Policies"),
         fill = "1 = Completely General Policies",
-        caption = "Source: Oxford Policy Tracker") +
+        caption = "Source: Oxford Covid-19 Government Policy Tracker") +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5d0"),
           legend.position = "right")
