@@ -40,6 +40,92 @@ library(binsreg)
 	The Oxford COVID-19 Government Response Tracker (OxCGRT) consists of a database that collects information regarding several different commonly used policies that governments around the world have taken to respond to the pandemic itself. In our study, the data taken from the 18 indicators will be used as an indication of the decisions that each government made, regarding containment and health, economic support and stringency; valuable information as we intend to comprehend how the decision regarding each of the points just mentioned is related to the institucional characteristics of each country; and how they have influenced on the evolution of the pandemic respectively. 
 The OxCGRT is especially relevant as it proposes standardized indicators of policies, which makes possible the comparison between countries. It is important, however, to make clear that the response tracker does not point out the effectiveness or the appropriateness of each policy and country’s response - which will be indirectly analyzed in our study. 
 
+The specific policy and response categories are coded as follows:
+
+School closures:
+0 - No measures
+1 - recommend closing
+2 - Require closing (only some levels or categories,
+eg just high school, or just public schools)
+3 - Require closing all levels
+No data - blank
+
+Workplace closures:
+0 - No measures
+1 - recommend closing (or work from home)
+2 - require closing (or work from home) for some
+sectors or categories of workers
+3 - require closing (or work from home) all but essential workplaces (eg grocery stores, doctors)
+No data - blank
+
+Cancel public events:
+0- No measures
+1 - Recommend cancelling
+2 - Require cancelling
+No data - blank
+
+Restrictions on gatherings:
+0 - No restrictions
+1 - Restrictions on very large gatherings (the limit is above 1000 people)
+2 - Restrictions on gatherings between 100-1000 people
+3 - Restrictions on gatherings between 10-100 people
+4 - Restrictions on gatherings of less than 10 people
+No data - blank
+
+Close public transport:
+0 - No measures
+1 - Recommend closing (or significantly reduce volume/route/means of transport available)
+2 - Require closing (or prohibit most citizens from using it)
+
+Public information campaigns:
+0 -No COVID-19 public information campaign
+1 - public officials urging caution about COVID-19
+2 - coordinated public information campaign (e.g. across traditional and social media)
+No data - blank
+
+Stay at home:
+0 - No measures
+1 - recommend not leaving house
+2 - require not leaving house with exceptions for daily exercise, grocery shopping, and ‘essential’ trips
+3 - Require not leaving house with minimal exceptions (e.g. allowed to leave only once every few days, or only one person can leave at a time, etc.)
+No data - blank
+
+Restrictions on internal movement:
+0 - No measures
+1 - Recommend movement restriction
+2 - Restrict movement
+
+International travel controls:
+0 - No measures
+1 - Screening
+2 - Quarantine arrivals from high-risk regions
+3 - Ban on high-risk regions
+4 - Total border closure
+No data - blank
+
+Testing policy
+0 – No testing policy
+1 – Only those who both (a) have symptoms AND (b) meet specific criteria (eg key workers, admitted to hospital, came into contact with a known case, returned from overseas)
+2 – testing of anyone showing COVID-19 symptoms
+3 – open public testing (eg “drive through” testing available to asymptomatic people)
+No data
+
+Contract tracing
+0 - No contact tracing
+1 - Limited contact tracing - not done for all cases
+2 - Comprehensive contact tracing - done for all cases
+No data
+
+Face coverings
+0- No policy
+1- Recommended
+2- Required in some specified shared/public spaces outside the home with other people present, or some situations when social distancing not possible
+3- Required in all shared/public spaces outside the home with other people present or all situations when social distancing not possible
+4- Required outside the home at all times regardless of location or presence of other people
+
+https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker
+
+
 ## World Justice Project Rule of Law Index
 	
 	The World Justice Project Rule of Law Index, available in the following link: https://worldjusticeproject.org/our-work/research-and-data/wjp-rule-law-index-2020/current-historical-data; consists in a quantitative assessment tool designed by the WJP that offers a very interesting picture as far as the legal institutions of country go, analysing the political environment, legal restrictions to governments powers, corruption incidence, order and security, civil and criminal justice, regulatory enforcement and the access to fundamental rights. Collected since 2012, the WJP Rule of Law Index is based on a worldwide survey, which covers 128 countries and jurisdictions, through household and expert inquiries. The database also groups countries according to their income level.
@@ -107,6 +193,9 @@ t <- tests %>%
   select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
   rename(date = Date, iso_code = "ISO code") 
+
+
+t %>% count(escala)
 
 df1 <- t %>% 
     filter(country %in% c("Singapore", "Poland", "Italy", "India", "France") & escala !=  "people tested")
@@ -985,7 +1074,9 @@ base %>%
 
 b <- base %>% 
   filter(days_after_1pm > 0) 
+
 reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + log(population) + log(gdp_per_capita) + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
+
 summary(reg)
 
 # regredir
@@ -1017,3 +1108,24 @@ reg5 <- lm(total_cases_per_million ~ `Overall Score` + `WJP Rule of Law Index: O
 
 summary(reg5)
 ```
+
+área de testes
+
+
+```{r}
+
+
+
+x <- binsreg(b$total_cases_per_million, b$gini_index_world_bank_estimate, w = b$population)
+
+summary(x)
+
+x <- runif(500)
+
+y <- sin(x)+rnorm(500)
+
+
+binsreg(y,x)
+
+```
+
