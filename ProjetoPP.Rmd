@@ -622,8 +622,21 @@ base %>%
         x = "Average international travel controls",
         y = "Log average of international support")
 
+
 ```
 
+
+# Tests
+
+```{r}
+#Experimental area
+
+base
+
+
+
+
+```
 
 
 # Descriptive Analysis of the World Justice Project Rule of Law 2019 database
