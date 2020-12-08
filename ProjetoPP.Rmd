@@ -629,7 +629,45 @@ base %>%
 ```{r}
 #Experimental area
 
-base
+#Testes x Covid
+
+base %>% 
+  select(name, iso_code, `Cumulative total per thousand`, total_cases_per_million, days_after_1pm) %>% 
+  filter(!is.na(total_cases_per_million), 
+         !is.na(`Cumulative total per thousand`)) %>% 
+  filter(days_after_1pm == 200) %>% 
+  mutate(logcasepthous = log(total_cases_per_million*1000)) %>% 
+  ggplot(x = `Cumulative total per thousand`, y = logcasepthous) +
+  geom_point(aes(x = `Cumulative total per thousand`, y = logcasepthous)) +
+  theme_clean() +
+  labs(title = "Cumulative testing per thousand and log(Total cases per thousand)")
+
+#Mean testing by continent as time goes by
+base %>% 
+  select(name, iso_code, region, `Daily change in cumulative total`, days_after_1pm) %>% 
+  filter(!is.na(`Daily change in cumulative total`)) %>% 
+  group_by(region, days_after_1pm) %>% 
+  summarise(meantest = mean(`Daily change in cumulative total`, is.na = TRUE), days_after_1pm) %>% 
+  mutate(logmeantest = log(meantest)) %>% 
+  ungroup() %>% 
+  ggplot(x = days_after_1pm, y = logmeantest) +
+  geom_path(aes(x = days_after_1pm, y = logmeantest)) +
+  theme_clean() +
+  labs(title = "Days after 1 case per million and daily change in cumulative testing per thousand", subtitle = "By Continents")
+
+#Mean testing by types of democracy as time goes by
+base %>% 
+  select(name, iso_code, type, `Daily change in cumulative total`, days_after_1pm) %>% 
+  filter(!is.na(`Daily change in cumulative total`),
+         !is.na(type)) %>% 
+  group_by(type, days_after_1pm) %>% 
+  summarise(meantest = mean(`Daily change in cumulative total`, is.na = TRUE), days_after_1pm) %>% 
+  mutate(logmeantest = log(meantest)) %>% 
+  ungroup() %>% 
+  ggplot(x = days_after_1pm, y = logmeantest) +
+  geom_path(aes(x = days_after_1pm, y = logmeantest)) +
+  theme_clean() +
+  labs(title = "Days after 1 case per million and daily change in cumulative testing per thousand", subtitle = "By Types of Democracy")
 
 
 
