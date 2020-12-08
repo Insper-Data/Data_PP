@@ -152,6 +152,9 @@ Nevertheless, the Gini Index, even with lags in some countries, can be considere
 
 ## Getting the databases
 ```{r}
+
+setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
+
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo"),
          date > "2019-12-31") %>% 
@@ -271,7 +274,7 @@ cpt <- CRT %>%
   rename(iso_code = "country_code") %>% 
   select(- c(region_name, region_code)) %>% 
   relocate(confirmed_cases, .after = country_name) %>% 
-  filter(iso_code != "RKS") 
+  filter(iso_code != "RKS", jurisdiction == "NAT_TOTAL") 
 
 # We opted to desconsider Kosovo, as the country didn't have any information in any of the other databases. Still, we believe that such decision won't change our conclusions in any significant way.
   
@@ -287,7 +290,7 @@ cpt <- cpt %>%
   filter(country_name != "United States" & iso_code != "USA",
          country_name != "United Kingdom" & iso_code != "GBR") %>% 
   bind_rows(us) %>% 
-  bind_rows(uk)
+  bind_rows(uk) 
 
 # Cleaning the Gini Index Database
 
@@ -631,16 +634,30 @@ base %>%
 
 #Testes x Covid
 
-base %>% 
-  select(name, iso_code, `Cumulative total per thousand`, total_cases_per_million, days_after_1pm) %>% 
+testcovid <- base %>% 
+  select(name, iso_code, `Cumulative total per thousand`, total_cases_per_million, days_after_1pm, `Income Group`) %>% 
   filter(!is.na(total_cases_per_million), 
-         !is.na(`Cumulative total per thousand`)) %>% 
-  filter(days_after_1pm == 200) %>% 
-  mutate(logcasepthous = log(total_cases_per_million*1000)) %>% 
-  ggplot(x = `Cumulative total per thousand`, y = logcasepthous) +
-  geom_point(aes(x = `Cumulative total per thousand`, y = logcasepthous)) +
+         !is.na(`Cumulative total per thousand`), !is.na(`Income Group`), !is.na(days_after_1pm)) %>% 
+  # filter(days_after_1pm == 200) %>% 
+  mutate(logcasepthous = log(total_cases_per_million*1000),
+         logct = log(`Cumulative total per thousand`)) %>% 
+  ggplot(y = logct, x = logcasepthous) +
+  geom_point(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
+  geom_smooth(aes(y = logct, x = logcasepthous), method = lm, se = FALSE) +
   theme_clean() +
-  labs(title = "Cumulative testing per thousand and log(Total cases per thousand)")
+  labs(title = "Log(Cumulative testing per thousand) and log(Total cases per thousand)")
+
+anim_testcovid <- testcovid + transition_time(days_after_1pm) +
+  labs(title = "Days after 1 death per million: {frame_time}") +
+  ease_aes('linear')
+
+animate(anim_testcovid, renderer = gifski_renderer("giftestcovid.gif"))
+
+####
+
+base %>% 
+  filter(days_after_1pm > 300) %>% 
+  count(name)
 
 #Mean testing by continent as time goes by
 base %>% 
@@ -651,7 +668,7 @@ base %>%
   mutate(logmeantest = log(meantest)) %>% 
   ungroup() %>% 
   ggplot(x = days_after_1pm, y = logmeantest) +
-  geom_path(aes(x = days_after_1pm, y = logmeantest)) +
+  geom_path(aes(x = days_after_1pm, y = logmeantest, color = region)) +
   theme_clean() +
   labs(title = "Days after 1 case per million and daily change in cumulative testing per thousand", subtitle = "By Continents")
 
@@ -665,7 +682,7 @@ base %>%
   mutate(logmeantest = log(meantest)) %>% 
   ungroup() %>% 
   ggplot(x = days_after_1pm, y = logmeantest) +
-  geom_path(aes(x = days_after_1pm, y = logmeantest)) +
+  geom_path(aes(x = days_after_1pm, y = logmeantest, color = type)) +
   theme_clean() +
   labs(title = "Days after 1 case per million and daily change in cumulative testing per thousand", subtitle = "By Types of Democracy")
 
