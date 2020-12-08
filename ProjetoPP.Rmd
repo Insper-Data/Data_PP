@@ -497,7 +497,7 @@ label_data$angle <- ifelse(angle < -90, angle + 180, angle)
  
 p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill = type)) +    
   geom_bar(stat = "identity", alpha=0.5) +
-  ylim(-50, 11) +
+  ylim(-50, 13) +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
@@ -505,7 +505,7 @@ p <- ggplot(dmi, aes(x=as.factor(id), y=`Overall Score`, fill = type)) +
     panel.grid = element_blank(),
     plot.margin = unit(rep(-2,4), "cm")) +
   coord_polar() + 
-  geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label = name, hjust = hjust), color = "black", fontface = "bold",alpha=0.6,
+  geom_text(data = label_data, aes(x = id, y = `Overall Score` + 1, label = iso_code, hjust = hjust), color = "black", fontface = "bold",alpha=0.6,
             size = 2.5, angle = label_data$angle, inherit.aes = FALSE ) +
   labs(title = "Democracy Index")
  
@@ -1138,6 +1138,30 @@ base %>%
        y = "Total cases per million", 
        title = "Inequality and Covid cases", 
        subtitle = "100 days after reaching 1 case per million")
+
+#GIF
+
+wrap <- base %>% 
+  filter(!is.na(`Income Group`), !is.na(days_after_1pm)) %>% 
+  clean_names() %>% 
+  mutate(logTCPM = log(total_cases_per_million)) %>% 
+  ggplot(aes(gini_index_world_bank_estimate, logTCPM)) +
+  geom_point(aes(size = 3, alpha = 0.5, color = region)) +
+  scale_alpha(guide = 'none') +
+  geom_smooth(method = lm, se = FALSE) +
+  facet_wrap(~ income_group) +
+  theme_clean() +
+  labs(x = "Gini Index", 
+       y = "Total cases per million (log)", 
+       title = "Inequality and Covid cases")
+
+anim_wrap <- wrap + transition_time(days_after_1pm) +
+  labs(subtitle = "Days after 1 death per million: {frame_time}") +
+  ease_aes('linear')
+
+animate(anim_wrap, renderer = gifski_renderer("gifwrap.gif"))
+
+
 ```
 
 
