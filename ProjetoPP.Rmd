@@ -43,6 +43,8 @@ library(ggthemes)
 library(spData)
 library(estimatr)
 library(binsreg)
+library(gifski)
+library(transformr)
 ```
 
 #Introduction
@@ -160,14 +162,14 @@ Nevertheless, the Gini Index, even with lags in some countries, can be considere
 
 ## Our Database
 
-	By aggregating all the information previously detailed, our database consists in a hub of institucional, political and Covid-19 pandemic’s statistics, which makes feasible an analysis that intends to relate the development of such data. To ease the manipulation of different databases and enable further manipulation, we have developed a simple dictionary, which states the name of each country in each database, and associates it with the respective Iso-Code of the nation. In our study, the use of the file will be guided to develop research on the relationship between the institutional environment of different countries and the efficiency of measures to contain the pandemic, in regards to public policies. However, we believe that there are multiple ways to take on such data and make much valuable analysis and interpretations - ones that could even reinforce the relevance of political and institucional matrices.
+	By aggregating all the information previously detailed, our database consists in a hub of institucional, political and Covid-19 pandemic’s statistics, which makes feasible an analysis that intends to relate the development of such data. To ease the manipulation of different databases and enable further manipulation, we have developed a simple dictionary, which states the name of each country in each database, and associates it with the respective Iso-Code of the nation. In our study, the use of the file will be guided to develop research on the relationship between the institutional environment of different countries and the efficiency of measures to contain the pandemic, in regards to public policies. However, we believe that there are multiple ways to take on such data and make much valuable analysis and interpretations - ones that could even reinforce the relevance of political and institutional matrices.
 	This document is divided in three sections, essentially: the manipulation and unification of databases; the descriptive analysis of the data; and the regression and robustness analysis. In the end of the document, we also provide everyone interested in such study some important empirical and theoretical bibliographical references, which we’ve used to develop our study, and that can be valuable to anyone interested in using this database as a study and/or research material.
 
 
 ## Getting the databases
 ```{r}
 
-setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
+setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo"),
@@ -1001,7 +1003,7 @@ p11 <- base %>%
          !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm < 251) %>% 
   ggplot(mapping = aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
   geom_point() +
-  scale_alpha(guide = 'none') 
+  scale_alpha(guide = 'none') +
   geom_smooth(method = lm, se = FALSE) +
   theme_classic() +
   labs(x = "Stay at home requirements")
