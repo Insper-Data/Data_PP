@@ -1171,7 +1171,8 @@ animate(anim_wrap, renderer = gifski_renderer("gifwrap.gif"))
 ```{r}
 
 b <- base %>% 
-  filter(days_after_1pm > 0) 
+  filter(days_after_1pm == 250) %>% 
+  mutate(logTCPM = log(total_cases_per_million))
 
 reg <- lm(total_cases_per_million ~ `Overall Score` +`WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + log(population) + log(gdp_per_capita) + aged_65_older + median_age + population_density + Region + `Income Group`, data = b)
 
@@ -1212,9 +1213,11 @@ summary(reg5)
 
 ```{r}
 
+?binsreg
 
+x <- binsreg(b$logTCPM, b$gini_index_world_bank_estimate, w = b$`Daily change in cumulative total per thousand`)
 
-x <- binsreg(b$total_cases_per_million, b$gini_index_world_bank_estimate, w = b$population)
+x
 
 summary(x)
 
