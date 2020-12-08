@@ -4,7 +4,6 @@ author: "Bruno, Bernardo e Vinicius"
 date: "14/09/2020"
 output:
   html_document: default
-  pdf_document: default
 editor_options:
   chunk_output_type: console
 ---
@@ -190,9 +189,9 @@ iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countrie
 ```{r}
 # Cleaning the test database from Our World in Data
 t <- tests %>% 
-  select("Entity":"ISO code", "Daily change in cumulative total":"Short-term positive rate") %>% 
+  select("Entity":"Date", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
-  rename(date = Date, iso_code = "ISO code") 
+  rename(date = "Date", iso_code = "ISO code") 
 
 
 t %>% count(escala)
