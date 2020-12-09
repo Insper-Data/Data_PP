@@ -661,7 +661,7 @@ testcovid <- base %>%
   geom_point(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
   geom_smooth(aes(y = logct, x = logcasepthous), method = lm, se = FALSE) +
   theme_clean() +
-  scale_alpha(guide = 'none') 
+  scale_alpha(guide = 'none') +
   labs(title = "Log(Cumulative testing per thousand) and log(Total cases per thousand)")
 
 anim_testcovid <- testcovid + transition_time(days_after_1pm) +
