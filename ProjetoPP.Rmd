@@ -642,6 +642,30 @@ base %>%
 
 ```
 
+# Our World in Data COVID-19
+
+```{r}
+
+base %>% 
+  select(name, iso_code, iso2, confirmed_cases, days_after_1pm) %>% 
+  filter(!is.na(confirmed_cases), days_after_1pm == 250) %>%
+  clean_names() %>%
+  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = confirmed_cases)) +
+   scale_fill_gradient(low = "seagreen", high = "coral") +
+   labs(title = "Confirmed COVID-19 cases",
+        subtitle = ("Values for 250 after 1 death per milion habitants"),
+        fill = "Cases",
+        caption = "Source: Our World In Data Covid") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+            legend.position = "right") 
+
+
+```
+
 
 # Tests
 
@@ -763,7 +787,6 @@ base %>%
   mutate(`WJP Rule of Law Index: Overall Score` = 10*`WJP Rule of Law Index: Overall Score`) %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), date == Sys.Date() - 1) %>%
   clean_names() %>% 
-  #left_join(iso) %>% 
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
