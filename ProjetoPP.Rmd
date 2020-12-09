@@ -169,7 +169,9 @@ Nevertheless, the Gini Index, even with lags in some countries, can be considere
 ## Getting the databases
 ```{r}
 
-setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
+# setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
+
+setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo"),
@@ -206,6 +208,7 @@ iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countrie
 ## Cleaning the data
 ```{r}
 # Cleaning the test database from Our World in Data
+
 t <- tests %>% 
   select("Entity":"Date", "Daily change in cumulative total":"Short-term positive rate") %>% 
   separate(Entity, c("country", "escala"), sep = " - ") %>% 
@@ -218,7 +221,7 @@ df1 <- t %>%
     filter(country %in% c("Singapore", "Poland", "Italy", "India", "France") & escala !=  "people tested")
 
 df2 <- t %>%
-    filter(country %in% c("United States", "Japan") & escala == "tests performed")
+    filter(country %in% c("United States", "Japan", "Argentina") & escala == "tests performed")
   
 t <- t %>% 
     anti_join(df1) %>% 
@@ -443,6 +446,7 @@ base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", 
 
 Creating a variable that counts how many days have passed since each country has reached 1 case per million inhabitants (It is important to comment that we've used the same threshold as Our World in Data)
 ```{r}
+
 marcador <- base_inter %>%
   filter(total_cases_per_million >= 1) %>% 
   group_by(name) %>% 
@@ -455,6 +459,12 @@ base <- left_join(base_inter, marcador) %>%
   relocate(c(days_after_1pm, total_cases_per_million), .after = date)
 
 rm(base_semi, base_inter, marcador, u, v, w, x, y, z, wjp_2019, giniOWID, iso, df1, df2, CRT, democracy)
+
+
+base %>% 
+  filter(days_after_1pm > 300) %>% 
+  count(name)
+
 ```
 
 
@@ -749,6 +759,7 @@ wjp_region %>%
   ggplot(aes(x=Region, y=`WJP Rule of Law Index: Overall Score`)) +                 
   geom_bar(aes(fill =Region), stat="identity") +
   scale_fill_brewer(palette = "Set1") +
+  theme_classic() +
   theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
   ggtitle("Region and WJP Overall Score")
 
