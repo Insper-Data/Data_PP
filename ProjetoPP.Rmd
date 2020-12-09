@@ -656,7 +656,7 @@ base %>%
    geom_sf(aes(geometry = geom, fill = confirmed_cases)) +
    scale_fill_gradient(low = "seagreen", high = "coral") +
    labs(title = "Confirmed COVID-19 cases",
-        subtitle = ("Values for 250 after 1 death per milion habitants"),
+        subtitle = ("Values for 250 days after 1 death per milion habitants"),
         fill = "Cases",
         caption = "Source: Our World In Data Covid") +
    theme_map() +
