@@ -930,11 +930,12 @@ mapfactor6
 
 ```{r}
 
-wjptidy %>% 
-  select(name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
+base %>% 
+  select(name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`,
+         type) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
-  geom_point(aes(color = )) +
-  geom_smooth(se = FALSE) +
+  geom_point(aes(color = type)) +
+  geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(wjptidy, name == c("Brazil", "China", "United States of America")),
                    aes(label = name),
                    box.padding   = 0.35, 
@@ -943,7 +944,9 @@ wjptidy %>%
   theme_classic() +
   xlim(0, 1) +
   ylim(0, 1) +
-  ggtitle("Civil Justice is free of discrimination and Absence of Corruption - WJP")
+  labs(title = "Civil Justice is free of discrimination and Absence of Corruption",
+       subtitle = "by type of democracy",
+       color = element_blank())
 
 ```
 
@@ -953,18 +956,21 @@ wjptidy %>%
 
 ```{r}
 
-wjptidy %>% 
-  select(name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`) %>% 
+base %>% 
+  select(name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`, type) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
-  geom_point() +
+  geom_point(aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement`>0.82),
+  geom_label_repel(data = subset(wjptidy, name == c("Brazil", "China", "United States of America")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   theme_classic() +
-  ggtitle("Order and Security and Regulatory Enforcement - WJP")
+  xlim(0, 1) +
+  ylim(0, 1) +
+  labs(title = "Order and Security and Regulatory Enforcement",
+        color = element_blank())
 
 ```
 
@@ -993,6 +999,7 @@ base %>%
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   theme_clean() +
+  xlim(0, 1) +
   labs(title = "WJP and Democracy Index: Overall Scores")
 
 ```
