@@ -218,6 +218,7 @@ iso_codes <- read_csv("https://raw.githubusercontent.com/lukes/ISO-3166-Countrie
 # Cleaning the data
 
 ```{r}
+
 # Cleaning the test database from Our World in Data
 
 t <- tests %>% 
@@ -330,12 +331,14 @@ giniOWIDlatest <- giniOWID %>%
   rename(YearGINdata = Year,
          "iso_code" = "Code") %>%
   clean_names()
+
 ```
 
 
 ## Creating a dictionary for our database
 
 ```{r}
+
 x <- cpt %>% 
   select(country_name, iso_code) %>% 
   unique()
@@ -420,12 +423,14 @@ dmi <- dici %>%
   select(name:iso_code) %>% 
   right_join(dmi, by = "iso_code")
 
+
 ```
 
 
 ## Structuring a unified database (Our database)
 
 ```{r}
+
 # Unifing the World Justice Project Rule of Law with CPT
 
 wjp_cpt <- left_join(cpt, wjptidy, by = c("iso_code", "name", "region", "iso2"))
@@ -452,6 +457,7 @@ base_semi %>% count(name)
 
 base_inter <- left_join(base_semi, giniOWIDlatest, by = c("iso_code", "region", "iso2", "name")) %>% 
   select(!(m1_wildcard))
+
 ```
 
 
@@ -487,11 +493,14 @@ base %>%
 ## Democracy Index
 
 ```{r}
-dmi %>%
+# não sei resolver
+
+base %>%
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
   geom_col() +
   coord_flip() +
-  theme_clean()
+  theme_clean() + 
+  facet_grid(~ region)
 
 dmi %>%
   filter(`Overall Score` > 6) %>% 
@@ -583,6 +592,7 @@ base %>%
 ## Oxford Covid-19 Government Response Tracker
 
 ```{r}
+
 # Analysis of the "flag" variables, which indicate if the public politics related to Covid have been specific to regions and counties or general to the entire country.
 
 cpt %>%
@@ -610,7 +620,6 @@ cpt %>%
           legend.position = "right")
 
 
-
 # Analysis of C8 (International Travel Controls)
 
 base %>%
@@ -626,7 +635,7 @@ base %>%
                       limits = c(1, 4), 
                       breaks = seq(1, 4, 1)) +
    labs(title = "International Travel Controls",
-        subtitle = ("In the beggining of September"),
+        subtitle = ("Mid November"),
         fill = "Index",
         caption = "Source: Oxford Policy Tracker") +
    theme_map() +
@@ -635,18 +644,29 @@ base %>%
 
 # Visual analysis of the correlation between C5 e E1
 
+max(cpt$e1_income_support, na.rm = TRUE)
+max(cpt$c5_close_public_transport, na.rm = TRUE)
+
 cpt %>%
   select(name, c5_close_public_transport, e1_income_support) %>%
   filter(!is.na(c5_close_public_transport), !is.na(e1_income_support)) %>%
   group_by(name) %>%
   summarise(media_fechamento_transporte = mean(c5_close_public_transport),
             media_suportederenda = mean(e1_income_support)) %>%
-  ggplot(mapping = aes(x = media_fechamento_transporte, y = media_suportederenda)) +
+  ggplot(aes(x = media_fechamento_transporte, y = media_suportederenda)) +
     geom_point() +
     geom_smooth(method = lm, se = FALSE) +
-  labs(title = "Scatterplot: C5 and E1")
+  labs(title = "Transport closing versus income support",
+       x = "Mean of public transport closing",
+       y = "Mean of Income Support") + 
+  xlim(0,2) +
+  ylim(0,2) +
+  theme_clean()
 
 # Visual analysis of the correlation between E4 e C8
+
+min(cpt$e4_international_support, na.rm = TRUE)
+min(cpt$c8_international_travel_controls, na.rm = TRUE)
 
 base %>%
   select(name, e4_international_support, c8_international_travel_controls, type) %>%
@@ -661,9 +681,13 @@ base %>%
     geom_point() +
     geom_smooth(method = lm, se = FALSE) +
     theme_clean() +
-   labs(title = "Scatterplot: E4 and C8",
+  xlim(0, 4) +
+  ylim(0, 30) +
+   labs(title = "Impact of travel controls on levels of international support",
+        subtitle = "Colors represent the types of democracy",
         x = "Average international travel controls",
-        y = "Log average of international support")
+        y = "Log average of international support",
+        color = element_blank())
 
 
 ```
@@ -671,6 +695,8 @@ base %>%
 ## Our World in Data COVID-19
 
 ```{r}
+
+## não consegui arrumar ainda
 
 base %>% 
   select(name, iso_code, iso2, confirmed_cases, days_after_1pm) %>% 
@@ -680,11 +706,11 @@ base %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = confirmed_cases)) +
-   scale_fill_gradient(low = "seagreen", high = "coral") +
    labs(title = "Confirmed COVID-19 cases",
         subtitle = ("Values for 250 days after 1 death per milion habitants"),
         fill = "Cases",
         caption = "Source: Our World In Data Covid") +
+   scale_fill_gradient(low = "seagreen", high = "coral", breaks = c(2.5, 5, 7.5, 10)) +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "right") 
@@ -696,6 +722,7 @@ base %>%
 ## Tests
 
 ```{r}
+
 #Experimental area
 
 #Testes x Covid
@@ -727,6 +754,7 @@ base %>%
   count(name)
 
 #Mean testing by continent as time goes by
+
 base %>% 
   select(name, iso_code, region, `Daily change in cumulative total`, days_after_1pm) %>% 
   filter(!is.na(`Daily change in cumulative total`)) %>% 
@@ -737,9 +765,14 @@ base %>%
   ggplot(x = days_after_1pm, y = logmeantest) +
   geom_path(aes(x = days_after_1pm, y = logmeantest, color = region)) +
   theme_clean() +
-  labs(title = "Days after 1 case per million and daily change in cumulative testing per thousand", subtitle = "By Continents")
+  labs(title = "Daily change in cumulative testing per thousand",
+       subtitle = "By Continents, after 1 case per million",
+       x = "Days",
+       y = "Mean number of tests",
+       color = element_blank())
 
 #Mean testing by types of democracy as time goes by
+
 base %>% 
   select(name, iso_code, type, `Daily change in cumulative total`, days_after_1pm) %>% 
   filter(!is.na(`Daily change in cumulative total`),
@@ -751,9 +784,11 @@ base %>%
   ggplot(x = days_after_1pm, y = logmeantest) +
   geom_path(aes(x = days_after_1pm, y = logmeantest, color = type)) +
   theme_clean() +
-  labs(title = "Days after 1 case per million and daily change in cumulative testing per thousand", subtitle = "By Types of Democracy")
-
-
+  labs(title = "Daily change in cumulative testing per thousand",
+       subtitle = "By type of regime, after 1 case per million",
+       x = "Days",
+       y = "Mean number of tests",
+       color = element_blank())
 
 
 ```
@@ -767,6 +802,7 @@ base %>%
 ```{r}
 
 # Table
+
 wjp_income <- wjptidy %>% 
   group_by(`Income Group`) %>% 
   summarize(`WJP Rule of Law Index: Overall Score` = mean(`WJP Rule of Law Index: Overall Score`)) %>% 
@@ -774,14 +810,18 @@ wjp_income <- wjptidy %>%
   view()
 
 # Column Graph
+
 wjp_income %>%                          
   arrange(`WJP Rule of Law Index: Overall Score`) %>%                                
   mutate(`Income Group` = factor(`Income Group`, `Income Group`)) %>%   
-  ggplot(aes(x=`Income Group`, y=`WJP Rule of Law Index: Overall Score`)) +                 
-  geom_bar(aes(fill =`Income Group`), stat="identity") +
-  scale_fill_brewer(palette = "RdYlGn") +
-  theme_classic() +
-  ggtitle("Income and WJP Overall Score")
+  ggplot(aes(x =`Income Group`, y=`WJP Rule of Law Index: Overall Score`)) +                 
+    geom_bar(aes(fill =`Income Group`), stat = "identity") +
+    scale_fill_brewer(palette = "RdYlGn") +
+    theme_classic() +
+    guides(fill = FALSE) + 
+    ylim(0, 1) +
+    labs(title = "WJP Overall Score",
+         subtitle = "by Income Group")
 
 ```
 
@@ -803,7 +843,8 @@ wjp_region %>%
   scale_fill_brewer(palette = "Set1") +
   theme_classic() +
   theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  ggtitle("Region and WJP Overall Score")
+  ggtitle("Region and WJP Overall Score") +
+  ylim(0, 1)
 
 ```
 
@@ -844,13 +885,17 @@ base %>%
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 1: Constraints on Government Powers`)) +
   geom_point(mapping = aes(color = type), size = 3) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`Factor 6: Regulatory Enforcement` > 0.8),
+  geom_label_repel(data = subset(wjptidy, name == c("Brazil", "China", "United States of America")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   theme_clean() +
-  ggtitle("Regulatory Enforcement and Constrantis on Government Powers  -  WJP")
+  xlim(0, 1) +
+  ylim(0, 1) +
+  labs(title = "Regulatory Enforcement and Constrantis on Government Powers",
+       subtitle = "by type of democracy",
+       color = element_blank())
 
 ```
 
@@ -862,9 +907,7 @@ mapfactor6 <- base %>%
   select(name, iso_code, iso2, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
   mutate(`Factor 6: Regulatory Enforcement` = 10*`Factor 6: Regulatory Enforcement`) %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), days_after_1pm == 10) %>%
-  #filter(!is.na(`Factor 6: Regulatory Enforcement`), date == Sys.Date() - 1) %>%
   clean_names() %>%
-  #left_join(iso) %>% 
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
@@ -890,14 +933,16 @@ mapfactor6
 wjptidy %>% 
   select(name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
-  geom_point() +
+  geom_point(aes(color = )) +
   geom_smooth(se = FALSE) +
-  geom_label_repel(data = subset(wjptidy,`7.3 Civil justice is free of corruption`>0.9),
+  geom_label_repel(data = subset(wjptidy, name == c("Brazil", "China", "United States of America")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   theme_classic() +
+  xlim(0, 1) +
+  ylim(0, 1) +
   ggtitle("Civil Justice is free of discrimination and Absence of Corruption - WJP")
 
 ```
