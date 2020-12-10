@@ -985,7 +985,7 @@ x <- base %>%
          !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm) %>% 
+  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm, type) %>% 
   filter(days_after_1pm == 30) %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`)) %>% 
@@ -993,7 +993,7 @@ base %>%
                        y = `Overall Score`)) +
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score`>0.8),
+  geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score` > 0.8),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
@@ -1001,6 +1001,7 @@ base %>%
   theme_clean() +
   xlim(0, 1) +
   labs(title = "WJP and Democracy Index: Overall Scores")
+
 
 ```
 
@@ -1027,6 +1028,7 @@ base %>%
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   theme_clean() +
+  xlim(0, 1) +
   labs(title = "Overall Score and Civic Participation")
 
 rm(gen_names_2)
@@ -1069,13 +1071,15 @@ gen_names_4 <- base %>%
          !is.na(total_deaths_per_million), days_after_1pm == 100)
 
 # Using compatible information (days_after_1pm)
+
 base %>% 
-  select(name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`, days_after_1pm) %>% 
+  select(name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`,
+         days_after_1pm, type) %>% 
   filter(days_after_1pm == 100) %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), 
          !is.na(total_cases_per_million)) %>% 
   ggplot(mapping = aes(y = log(total_cases_per_million), x = `Factor 6: Regulatory Enforcement`)) +
-  geom_point() +
+  geom_point(aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
   geom_label_repel(data = subset(gen_names_4, total_cases_per_million>15000),
                    aes(label = name),
@@ -1083,7 +1087,9 @@ base %>%
                    point.padding = 0.5,
                    segment.color = 'grey50') +
   labs(title = "Regulatory enforcement and COVID-19 cases/million plot", 
-       subtitle = ("Mid September")) +
+       subtitle = ("Mid September"),
+       color = element_blank()) +
+  xlim(0, 1) +
   theme_clean()
        
 rm(gen_names_4)
@@ -1232,7 +1238,10 @@ base %>%
   select(days_after_1pm) %>% 
   ggplot(aes(days_after_1pm)) +
   geom_histogram() +
-  theme_classic()
+  theme_classic() +
+  labs(title = "Distribution of days after 1 case per million habitants",
+       y = "# of countries",
+       x = "Days")
 
 ```
 
