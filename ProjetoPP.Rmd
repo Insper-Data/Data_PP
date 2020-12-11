@@ -12,7 +12,7 @@ output:
     number_section: yes
     theme: readable
     highlight: haddock
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -181,7 +181,9 @@ This document is divided in three sections, essentially: the manipulation and un
 
 # setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
 
-setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
+# setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
+
+setwd("C:/Users/Bruno Bregola/Desktop/Projeto/Data_PP/bases")
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo"),
@@ -695,7 +697,6 @@ base %>%
 ## Our World in Data COVID-19
 
 ```{r}
-
 base %>%
   select(name, iso_code, iso2, confirmed_cases, days_after_1pm) %>%
   filter(!is.na(confirmed_cases), days_after_1pm == 250) %>%
@@ -709,6 +710,27 @@ base %>%
         fill = "Cases",
         caption = "Source: Our World In Data Covid") +
    scale_fill_gradient(low = "seagreen", high = "coral") +
+   theme_map() +
+    theme(panel.background = element_rect(fill = "#b3d5e0"),
+            legend.position = "bottom")
+```
+
+## Gini Index
+
+```{r}
+base %>%
+  select(name, iso_code, iso2, days_after_1pm, gini_index_world_bank_estimate) %>%
+  filter(!is.na(gini_index_world_bank_estimate), days_after_1pm == 250) %>%
+  clean_names() %>%
+  left_join(world, by = c("iso2" = "iso_a2")) %>%
+  ggplot() +
+   geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
+   geom_sf(aes(geometry = geom, fill = gini_index_world_bank_estimate)) +
+   labs(title = "Gini Index",
+        subtitle = "latest data for each country",
+        fill = "Index",
+        caption = "Source: World Bank") +
+   scale_fill_gradient(low = "springgreen3", high = "tomato2") +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
             legend.position = "bottom")
@@ -756,11 +778,12 @@ testcovid <- base %>%
   mutate(logcasepthous = log(total_cases_per_million*1000),
          logct = log(`Cumulative total per thousand`)) %>% 
   ggplot(y = logct, x = logcasepthous) +
-  geom_path(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
-  geom_smooth(aes(y = logct, x = logcasepthous), method = lm, se = FALSE) +
+  geom_point(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
   theme_clean() +
   scale_alpha(guide = 'none') +
-  labs(title = "Log(Cumulative testing per thousand) and log(Total cases per thousand)")
+  labs(title = "Log(Cumulative testing per thousand) and log(Total cases per thousand)",
+       x = "Log tests",
+       y = "Log cases per thousand")
 
 anim_testcovid <- testcovid + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}") +
@@ -1005,18 +1028,18 @@ base %>%
 
 x <- base %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
-         !is.na(`Overall Score`), days_after_1pm == 30)
+         !is.na(`Overall Score`), days_after_1pm == 60)
 
 base %>% 
   select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm, `Income Group`) %>% 
-  filter(days_after_1pm == 30) %>% 
+  filter(days_after_1pm == 60) %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`,
                        y = `Overall Score`)) +
   geom_point(aes(color = `Income Group`)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(x, name == c("Brazil", "China")),
+  geom_label_repel(data = subset(x, name == c("United States of America", "China")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
@@ -1111,6 +1134,7 @@ base %>%
                    segment.color = 'grey50') +
   labs(title = "Regulatory enforcement and COVID-19 cases/million plot", 
        subtitle = ("Mid September"),
+       y = "Log total cases per million",
        color = element_blank()) +
   xlim(0, 1) +
   theme_classic()
