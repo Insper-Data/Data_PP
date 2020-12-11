@@ -500,7 +500,7 @@ base %>%
   geom_col() +
   coord_flip() +
   theme_clean() + 
-  facet_grid(~ region)
+  facet_wrap(~ region)
 
 dmi %>%
   filter(`Overall Score` > 6) %>% 
@@ -661,7 +661,7 @@ cpt %>%
        y = "Mean of Income Support") + 
   xlim(0,2) +
   ylim(0,2) +
-  theme_clean()
+  theme_classic()
 
 # Visual analysis of the correlation between E4 e C8
 
@@ -680,7 +680,7 @@ base %>%
   ggplot(mapping = aes(x = media_controle, y = media_log_suporte, color = tipe)) +
     geom_point() +
     geom_smooth(method = lm, se = FALSE) +
-    theme_clean() +
+    theme_classic() +
   xlim(0, 4) +
   ylim(0, 30) +
    labs(title = "Impact of travel controls on levels of international support",
@@ -727,6 +727,30 @@ base %>%
 
 #Testes x Covid
 
+base %>% 
+  select(name, iso_code, `Cumulative total per thousand`, total_cases_per_million, days_after_1pm,
+         `Income Group`, region) %>% 
+  filter(!is.na(total_cases_per_million), 
+         !is.na(`Cumulative total per thousand`), !is.na(`Income Group`), !is.na(days_after_1pm)) %>% 
+  # filter(days_after_1pm == 200) %>% 
+  mutate(logcasepthous = log(total_cases_per_million * 1000),
+         logct = log(`Cumulative total per thousand`)) %>% 
+  ggplot(y = logct, x = logcasepthous) +
+  geom_path(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
+  geom_smooth(aes(y = logct, x = logcasepthous), method = lm, se = FALSE) +
+  geom_abline(slope = 0.45, intercept = 0) + 
+  theme_clean() +
+  xlim(0, 20) +
+  ylim(0, 10) +
+  scale_alpha(guide = 'none') +
+  facet_wrap(~ `Income Group`) +
+  labs(title = "Testing versus Cases",
+       x = "Log tests",
+       y = "Log cases per thousand")
+
+
+
+
 testcovid <- base %>% 
   select(name, iso_code, `Cumulative total per thousand`, total_cases_per_million, days_after_1pm, `Income Group`) %>% 
   filter(!is.na(total_cases_per_million), 
@@ -735,7 +759,7 @@ testcovid <- base %>%
   mutate(logcasepthous = log(total_cases_per_million*1000),
          logct = log(`Cumulative total per thousand`)) %>% 
   ggplot(y = logct, x = logcasepthous) +
-  geom_point(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
+  geom_path(aes(y = logct, x = logcasepthous, color = `Income Group`)) +
   geom_smooth(aes(y = logct, x = logcasepthous), method = lm, se = FALSE) +
   theme_clean() +
   scale_alpha(guide = 'none') +
@@ -998,7 +1022,7 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean() +
+  theme_classic() +
   xlim(0, 1) +
   labs(title = "WJP and Democracy Index: Overall Scores")
 
@@ -1027,7 +1051,7 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean() +
+  theme_classic() +
   xlim(0, 1) +
   labs(title = "Overall Score and Civic Participation")
 
@@ -1056,7 +1080,8 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean() +
+  theme_classic() +
+  xlim(0, 1) +
   labs(title = "Overall Score and Absence of Corruption")
 
 rm(gen_names_3)
@@ -1081,7 +1106,7 @@ base %>%
   ggplot(mapping = aes(y = log(total_cases_per_million), x = `Factor 6: Regulatory Enforcement`)) +
   geom_point(aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(gen_names_4, total_cases_per_million>15000),
+  geom_label_repel(data = subset(gen_names_4, total_cases_per_million > 15000),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
@@ -1090,7 +1115,7 @@ base %>%
        subtitle = ("Mid September"),
        color = element_blank()) +
   xlim(0, 1) +
-  theme_clean()
+  theme_classic()
        
 rm(gen_names_4)
 
