@@ -493,7 +493,7 @@ base %>%
 ## Democracy Index
 
 ```{r}
-# não sei resolver
+# não sei resolver talvez fazer um mapa
 
 base %>%
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
@@ -696,13 +696,11 @@ base %>%
 
 ```{r}
 
-## não consegui arrumar ainda
-
-base %>% 
-  select(name, iso_code, iso2, confirmed_cases, days_after_1pm) %>% 
+base %>%
+  select(name, iso_code, iso2, confirmed_cases, days_after_1pm) %>%
   filter(!is.na(confirmed_cases), days_after_1pm == 250) %>%
   clean_names() %>%
-  left_join(world, by = c("iso2" = "iso_a2")) %>% 
+  left_join(world, by = c("iso2" = "iso_a2")) %>%
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = confirmed_cases)) +
@@ -713,7 +711,7 @@ base %>%
    scale_fill_gradient(low = "seagreen", high = "coral") +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
-            legend.position = "bottom") 
+            legend.position = "bottom")
 
 
 ```
@@ -741,7 +739,6 @@ base %>%
   geom_abline(slope = 0.45, intercept = 0) + 
   theme_clean() +
   xlim(0, 20) +
-  ylim(0, 10) +
   scale_alpha(guide = 'none') +
   facet_wrap(~ `Income Group`) +
   labs(title = "Testing versus Cases",
@@ -789,8 +786,8 @@ base %>%
   ggplot(x = days_after_1pm, y = logmeantest) +
   geom_path(aes(x = days_after_1pm, y = logmeantest, color = region)) +
   theme_clean() +
-  labs(title = "Daily change in cumulative testing per thousand",
-       subtitle = "By Continents, after 1 case per million",
+  labs(title = "Daily testing per thousand",
+       subtitle = "by continents, after 1 case per million",
        x = "Days",
        y = "Mean number of tests",
        color = element_blank())
@@ -808,8 +805,8 @@ base %>%
   ggplot(x = days_after_1pm, y = logmeantest) +
   geom_path(aes(x = days_after_1pm, y = logmeantest, color = type)) +
   theme_clean() +
-  labs(title = "Daily change in cumulative testing per thousand",
-       subtitle = "By type of regime, after 1 case per million",
+  labs(title = "Daily testing per thousand",
+       subtitle = "by type of regime, after 1 case per million",
        x = "Days",
        y = "Mean number of tests",
        color = element_blank())
@@ -914,7 +911,7 @@ base %>%
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50') +
-  theme_clean() +
+  theme_classic() +
   xlim(0, 1) +
   ylim(0, 1) +
   labs(title = "Regulatory Enforcement and Constrantis on Government Powers",
@@ -957,6 +954,7 @@ mapfactor6
 base %>% 
   select(name, iso_code, `7.3 Civil justice is free of corruption`, `Factor 2: Absence of Corruption`,
          type) %>% 
+  filter(!is.na(type)) %>% 
   ggplot(mapping = aes(x = `7.3 Civil justice is free of corruption`, Factor, y = `Factor 2: Absence of Corruption`)) +
   geom_point(aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
@@ -982,6 +980,7 @@ base %>%
 
 base %>% 
   select(name, iso_code, `Factor 5: Order and Security`, `Factor 6: Regulatory Enforcement`, type) %>% 
+  filter(!is.na(type)) %>% 
   ggplot(mapping = aes(x = `Factor 6: Regulatory Enforcement`, y = `Factor 5: Order and Security`)) +
   geom_point(aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
@@ -1009,15 +1008,15 @@ x <- base %>%
          !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm, type) %>% 
+  select(name, iso_code, `WJP Rule of Law Index: Overall Score`, `Overall Score`, days_after_1pm, `Income Group`) %>% 
   filter(days_after_1pm == 30) %>% 
   filter(!is.na(`WJP Rule of Law Index: Overall Score`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `WJP Rule of Law Index: Overall Score`,
                        y = `Overall Score`)) +
-  geom_point() +
+  geom_point(aes(color = `Income Group`)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(x, `WJP Rule of Law Index: Overall Score` > 0.8),
+  geom_label_repel(data = subset(x, name == c("Brazil", "China")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
@@ -1039,14 +1038,14 @@ gen_names_2 <- base %>%
          !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(name, iso_code, `3.3 Civic participation`, `Overall Score`, days_after_1pm) %>% 
+  select(name, iso_code, `3.3 Civic participation`, `Overall Score`, days_after_1pm, `Income Group`) %>% 
   filter(days_after_1pm == 30) %>% 
   filter(!is.na(`3.3 Civic participation`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `3.3 Civic participation`, y = `Overall Score`)) +
-  geom_point() +
+  geom_point(aes(color = `Income Group`)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(gen_names_2, `3.3 Civic participation`>0.838),
+  geom_label_repel(data = subset(gen_names_2, name == c("Brazil", "China")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
@@ -1068,14 +1067,14 @@ gen_names_3 <- base %>%
          !is.na(`Overall Score`), days_after_1pm == 30)
 
 base %>% 
-  select(name, iso_code, `Factor 2: Absence of Corruption`, `Overall Score`, days_after_1pm) %>% 
+  select(name, iso_code, `Factor 2: Absence of Corruption`, `Overall Score`, days_after_1pm, `Income Group`) %>% 
   filter(days_after_1pm == 30) %>% 
   filter(!is.na(`Factor 2: Absence of Corruption`), 
          !is.na(`Overall Score`)) %>% 
   ggplot(mapping = aes(x = `Factor 2: Absence of Corruption`, y = `Overall Score`)) +
-  geom_point() +
+  geom_point(aes(color = `Income Group`)) +
   geom_smooth(method = lm, se = FALSE) +
-  geom_label_repel(data = subset(gen_names_3, `Factor 2: Absence of Corruption`>0.85),
+  geom_label_repel(data = subset(gen_names_3, name == c("Brazil", "China")),
                    aes(label = name),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
@@ -1100,9 +1099,8 @@ gen_names_4 <- base %>%
 base %>% 
   select(name, iso_code, total_cases_per_million, `Factor 6: Regulatory Enforcement`,
          days_after_1pm, type) %>% 
-  filter(days_after_1pm == 100) %>% 
   filter(!is.na(`Factor 6: Regulatory Enforcement`), 
-         !is.na(total_cases_per_million)) %>% 
+         !is.na(total_cases_per_million), !is.na(type), days_after_1pm == 100) %>% 
   ggplot(mapping = aes(y = log(total_cases_per_million), x = `Factor 6: Regulatory Enforcement`)) +
   geom_point(aes(color = type)) +
   geom_smooth(method = lm, se = FALSE) +
@@ -1122,22 +1120,6 @@ rm(gen_names_4)
 ```
 
 ### 12) Studying the relationship between the averages of Factor 4 and 6, from the Oxford Response Tracker 
-
-
-```{r}
-
-base %>% 
-  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
-  filter(!is.na(`Factor 4: Fundamental Rights`), 
-         !is.na(c6_stay_at_home_requirements)) %>% 
-  ggplot(mapping = aes(group = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
-  geom_boxplot() +
-  labs(title = "Fundamental Rights and Stay at home requirements", x = "Stay at home requirements") +
-  theme_classic()
-
-```
-
-### 12B) Previous analysis and the time variable "days_after_1pm"
 
 ```{r}
 
@@ -1231,13 +1213,13 @@ base %>%
 
 mapcovid <- base %>% 
   select(name, iso_code, iso2, total_deaths_per_million, days_after_1pm) %>% 
-  filter(!is.na(total_deaths_per_million), days_after_1pm == 200) %>%
+  filter(!is.na(total_deaths_per_million), days_after_1pm == 200) %>% 
   clean_names() %>%
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = total_deaths_per_million)) +
-   scale_fill_gradient(high = "#ff726f", low = "#0087C0", limits = c(0, 1000), breaks = seq(0, 1000, 100)) +
+   scale_fill_gradient(high = "tomato3", low = "turquoise3", limits = c(0, 1000), breaks = seq(0, 1000, 100)) +
    labs(title = "Total deaths per million",
         subtitle = ("Values for 200 days after country reached 1 case per million"),
         fill = "Index",
@@ -1273,11 +1255,14 @@ base %>%
                               population > 15831401 ~ "Large")) %>% 
   ggplot(aes(gini_index_world_bank_estimate, total_cases_per_million)) +
   geom_point(aes(size = population, alpha = 0.5, color = region)) +
+  scale_alpha(guide = "none") +
+  guides(size = FALSE) +
   facet_wrap(~ pop_size) +
   theme_clean() +
   labs(x = "Gini Index", 
        y = "Total cases per million", 
-       title = "Inequality and Covid cases")
+       title = "Inequality and Covid cases",
+       color = "Region")
 
 #Animation
   
@@ -1290,12 +1275,14 @@ gtc <- base %>%
   ggplot(aes(gini_index_world_bank_estimate, log(total_cases_per_million))) +
   geom_point(aes(size = population, alpha = 0.5, color = region)) +
   scale_alpha(guide = 'none') +
+  guides(size = FALSE) +
   geom_smooth(method = lm, se = FALSE) +
   facet_wrap(~ pop_size) +
   theme_clean() +
   labs(x = "Gini Index", 
        y = "Log (Total cases per million)",
-       subtitle = "Divided by population size")
+       subtitle = "Divided by population size",
+       color = "Region")
 
 anim_gtc <- gtc + transition_time(days_after_1pm) +
   labs(title = "Days after 1 death per million: {frame_time}") +
@@ -1346,15 +1333,17 @@ base %>%
   filter(days_after_1pm == 100, !is.na(`Income Group`)) %>% 
   clean_names() %>% 
   ggplot(aes(gini_index_world_bank_estimate, total_cases_per_million)) +
-  geom_point(aes(size = 3, alpha = 0.5, color = region)) +
+  geom_point(aes(size = 2.5, alpha = 0.5, color = region)) +
   scale_alpha(guide = 'none') +
+  guides(size = FALSE) +
   geom_smooth(method = lm, se = FALSE) +
   facet_wrap(~ income_group) +
-  theme_clean() +
+  theme_classic() +
   labs(x = "Gini Index", 
        y = "Total cases per million", 
        title = "Inequality and Covid cases", 
-       subtitle = "100 days after reaching 1 case per million")
+       subtitle = "100 days after reaching 1 case per million",
+       color = "Region")
 
 # GIF
 
@@ -1363,14 +1352,16 @@ wrap <- base %>%
   clean_names() %>% 
   mutate(logTCPM = log(total_cases_per_million)) %>% 
   ggplot(aes(gini_index_world_bank_estimate, logTCPM)) +
-  geom_point(aes(size = 3, alpha = 0.5, color = region)) +
+  geom_point(aes(size = 2.5, alpha = 0.5, color = region)) +
   scale_alpha(guide = 'none') +
+  guides(size = FALSE) +
   geom_smooth(method = lm, se = FALSE) +
   facet_wrap(~ income_group) +
-  theme_clean() +
+  theme_classic() +
   labs(x = "Gini Index", 
        y = "Total cases per million (log)", 
-       title = "Inequality and Covid cases")
+       title = "Inequality and Covid cases",
+       color = "Region")
 
 anim_wrap <- wrap + transition_time(days_after_1pm) +
   labs(subtitle = "Days after 1 death per million: {frame_time}") +
