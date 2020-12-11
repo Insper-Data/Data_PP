@@ -707,13 +707,13 @@ base %>%
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
    geom_sf(aes(geometry = geom, fill = confirmed_cases)) +
    labs(title = "Confirmed COVID-19 cases",
-        subtitle = ("Values for 250 days after 1 death per milion habitants"),
+        subtitle = ("Values for 250 days after 1 case per million habitants"),
         fill = "Cases",
         caption = "Source: Our World In Data Covid") +
-   scale_fill_gradient(low = "seagreen", high = "coral", breaks = c(2.5, 5, 7.5, 10)) +
+   scale_fill_gradient(low = "seagreen", high = "coral") +
    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
-            legend.position = "right") 
+            legend.position = "bottom") 
 
 
 ```
@@ -1137,27 +1137,91 @@ base %>%
 
 ```
 
-### 12B) Previous analysis, animated using a gif and the time variable "days_after_1pm"
+### 12B) Previous analysis and the time variable "days_after_1pm"
 
 ```{r}
 
-p11 <- base %>% 
+# 1
+
+base %>% 
   select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
   filter(!is.na(`Factor 4: Fundamental Rights`), 
-         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm < 250) %>% 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 1) %>% 
   ggplot(aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
-  geom_density(aes(x =..density.., y = `Factor 4: Fundamental Rights`), fill = "forestgreen", alpha = 0.5) +
-  geom_density(aes(y = ..density..), fill = "steelblue3", alpha = 0.7) +
+  geom_histogram(aes(y = stat(count/sum(count))), fill = "steelblue3", alpha = 0.7) +
   geom_jitter() +
   scale_alpha(guide = 'none') +
   theme_classic() +
-  ylim(0, 1.25) +
-  labs(x = "Stay at home requirements")
+  ylim(0, 1) +
+  labs(title = "Fundamental Rights versus Stay at home requirements",
+       subtitle = "at 1 day after 1 case per million habitants",
+    x = "Stay at home requirements")
 
-anim11 <- p11 + transition_time(days_after_1pm) +
-  labs(title = "Days after 1 death per million: {frame_time}")
+# 40
 
-animate(anim11, renderer = gifski_renderer("gifregulatory.gif"))
+base %>% 
+  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  filter(!is.na(`Factor 4: Fundamental Rights`), 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 40) %>% 
+  ggplot(aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_histogram(aes(y = stat(count/sum(count))), fill = "steelblue3", alpha = 0.7) +
+  geom_jitter() +
+  scale_alpha(guide = 'none') +
+  theme_classic() +
+  ylim(0, 1) +
+  labs(title = "Fundamental Rights versus Stay at home requirements",
+       subtitle = "at 40 days after 1 case per million habitants",
+    x = "Stay at home requirements")
+
+# 75
+
+base %>% 
+  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  filter(!is.na(`Factor 4: Fundamental Rights`), 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 75) %>% 
+  ggplot(aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_histogram(aes(y = stat(count/sum(count))), fill = "steelblue3", alpha = 0.7) +
+  geom_jitter() +
+  scale_alpha(guide = 'none') +
+  theme_classic() +
+  ylim(0, 1) +
+  labs(title = "Fundamental Rights versus Stay at home requirements",
+       subtitle = "at 75 days after 1 case per million habitants",
+    x = "Stay at home requirements")
+
+# 150
+
+base %>% 
+  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  filter(!is.na(`Factor 4: Fundamental Rights`), 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 150) %>% 
+  ggplot(aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_histogram(aes(y = stat(count/sum(count))), fill = "steelblue3", alpha = 0.7) +
+  geom_jitter() +
+  scale_alpha(guide = 'none') +
+  theme_classic() +
+  ylim(0, 1) +
+  labs(title = "Fundamental Rights versus Stay at home requirements",
+       subtitle = "at 150 days after 1 case per million habitants",
+    x = "Stay at home requirements")
+
+#225
+
+base %>% 
+  select(name, iso_code, `Factor 4: Fundamental Rights`, c6_stay_at_home_requirements, days_after_1pm) %>% 
+  filter(!is.na(`Factor 4: Fundamental Rights`), 
+         !is.na(c6_stay_at_home_requirements),!is.na(days_after_1pm), days_after_1pm == 225) %>% 
+  ggplot(aes(x = c6_stay_at_home_requirements, y = `Factor 4: Fundamental Rights`)) +
+  geom_histogram(aes(y = stat(count/sum(count))), fill = "steelblue3", alpha = 0.7) +
+  geom_jitter() +
+  scale_alpha(guide = 'none') +
+  theme_classic() +
+  ylim(0, 1) +
+  labs(title = "Fundamental Rights versus Stay at home requirements",
+       subtitle = "at 225 days after 1 case per million habitants",
+    x = "Stay at home requirements")
+
+
 
 ```
 
