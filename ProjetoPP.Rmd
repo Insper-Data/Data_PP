@@ -3,6 +3,8 @@ title: "Projeto Insper Data - Politicas Publicas"
 author: "Bruno, Bernardo e Vinicius"
 date: "14/09/2020"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     df_print: paged
     toc: yes
@@ -579,12 +581,12 @@ base %>%
   left_join(world, by = c("iso2" = "iso_a2")) %>% 
   ggplot() +
    geom_sf(aes(geometry = geom), data = world, fill = "lightgrey") +
-   geom_sf(aes(geometry = geom, fill = type.x)) +
-   labs(title = "Types of Democracy",
-        subtitle = ("Democracy Index 2019"),
-        fill = "",
-        caption = "Source: Democracy Index, The Economist") +
-   theme_map() +
+   geom_sf(aes(geometry = geom, fill = type.x, alpha = 0.8)) +
+   # labs(title = "Types of Democracy",
+   #      subtitle = ("Democracy Index 2019"),
+   #      fill = "",
+   #      caption = "Source: Democracy Index, The Economist") +
+    theme_map() +
     theme(panel.background = element_rect(fill = "#b3d5e0"),
           legend.position = "right")
 
@@ -1436,6 +1438,7 @@ b2 <- base %>%
 
 reg5 <- lm(total_cases_per_million ~ `Overall Score` + `WJP Rule of Law Index: Overall Score` + gini_index_world_bank_estimate + population + gdp_per_capita + aged_65_older + median_age + population_density + Region + `Income Group` + days_after_1pm + human_development_index, data = b2)
 
+
 summary(reg5)
 
 ```
@@ -1444,17 +1447,19 @@ summary(reg5)
 
 ```{r}
 
-x <- binsreg(b$logTCPM, b$gini_index_world_bank_estimate, w = b$`Daily change in cumulative total per thousand`)
+colunas <- tibble(colnames(base))
+
+x <- binsreg(log(b$`Cumulative total per thousand`), b$gini_index_world_bank_estimate, w = b$total_cases_per_million)
 
 x
 
 summary(x)
 
-x2 <- binsreg(b$total_cases_per_million, b$`Overall Score`, w = b$gini_index_world_bank_estimate)
+x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, w = b[,c(7, 39, 40, 43, 68, 175)])
 
 summary(x2)
 
-x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = c(b$gini_index_world_bank_estimate))
+x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b[,c(52, 175)])
 
 summary(x3)
 
