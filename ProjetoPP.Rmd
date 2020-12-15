@@ -517,6 +517,7 @@ dmi %>%
 dmi %>%
   filter(`Overall Score` < 6) %>% 
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
+  scale_fill_brewer(palette = "YlGnBu") +
   geom_col() +
   coord_flip() +
   theme_clean()
