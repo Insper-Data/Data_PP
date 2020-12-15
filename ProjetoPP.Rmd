@@ -181,11 +181,11 @@ This document is divided in three sections, essentially: the manipulation and un
 
 ```{r}
 
-# setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
+setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
 
 # setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
 
-setwd("C:/Users/Bruno Bregola/Desktop/Projeto/Data_PP/bases")
+# setwd("C:/Users/Bruno Bregola/Desktop/Projeto/Data_PP/bases")
 
 covid <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv") %>% 
   filter(!location %in% c("International", "World","Kosovo"),
@@ -509,6 +509,7 @@ base %>%
 dmi %>%
   filter(`Overall Score` > 6) %>% 
   ggplot(aes(x = reorder(name, -`Overall Score`), `Overall Score`, fill = type)) + 
+  scale_fill_brewer(palette = "GnBu") +
   geom_col() +
   coord_flip() +
   theme_clean()
