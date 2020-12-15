@@ -1455,11 +1455,11 @@ x <- binsreg(log(b$`Cumulative total per thousand`), b$gini_index_world_bank_est
 
 summary(x)
 
-x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, w = b[,c(7, 39, 40, 43, 68, 175)], nbins = 20)
+x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, w = b[,c(7, 39, 40, 43, 68, 175)], nbins = 20, polyreg = TRUE)
 
 summary(x2)
 
-x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b[,c(52, 175)], nbins = 20)
+x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b[,c(52, 175)], nbins = 20, polyreg = TRUE)
 
 summary(x3)
 
