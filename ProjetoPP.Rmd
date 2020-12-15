@@ -1451,19 +1451,20 @@ summary(reg5)
 
 colunas <- tibble(colnames(base))
 
-x <- binsreg(log(b$`Cumulative total per thousand`), b$gini_index_world_bank_estimate, w = b$total_cases_per_million)
-
-x
+x <- binsreg(log(b$`Cumulative total per thousand`), b$gini_index_world_bank_estimate, w = b$total_cases_per_million, nbins = 20)
 
 summary(x)
 
-x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, w = b[,c(7, 39, 40, 43, 68, 175)])
+x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, w = b[,c(7, 39, 40, 43, 68, 175)], nbins = 20)
 
 summary(x2)
 
-x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b[,c(52, 175)])
+x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b[,c(52, 175)], nbins = 20)
 
 summary(x3)
 
+x4 <- binsreg(log(b$total_cases_per_million), b$gini_index_world_bank_estimate, w = log(b$`Cumulative total per thousand`), nbins = 20)
+
+summary(x4)
 ```
 
