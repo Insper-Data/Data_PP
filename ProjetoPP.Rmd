@@ -3,8 +3,6 @@ title: "Projeto Insper Data - Politicas Publicas"
 author: "Bruno, Bernardo e Vinicius"
 date: "14/09/2020"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     df_print: paged
     toc: yes
@@ -14,6 +12,8 @@ output:
     number_section: yes
     theme: readable
     highlight: haddock
+  pdf_document:
+    toc: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -181,9 +181,9 @@ This document is divided in three sections, essentially: the manipulation and un
 
 ```{r}
 
-setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
+# setwd("C:/Users/Bernardo Lisboa/Desktop/SEMESTRES INSPER/Entidades e Challenges/Insper Data/Data_PP/bases")
 
-# setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
+setwd("C:/Users/User/Desktop/dataset/Data_PP/bases")
 
 # setwd("C:/Users/Bruno Bregola/Desktop/Projeto/Data_PP/bases")
 
@@ -1455,16 +1455,19 @@ x <- binsreg(log(b$`Cumulative total per thousand`), b$gini_index_world_bank_est
 
 summary(x)
 
-x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, w = b[,c(7, 39, 40, 43, 68, 175)], nbins = 20, polyreg = TRUE)
+#The next two regressions were generated without the use of control variables because of an error that occurred the last time we tried to run the code but we believe it is a punctual problem that can be solved.
+
+x2 <- binsreg(log(b$total_cases_per_million), b$`Overall Score`, nbins = 20, polyreg = TRUE)
 
 summary(x2)
 
-x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, w = b[,c(52, 175)], nbins = 20, polyreg = TRUE)
+x3 <- binsreg(b$`Overall Score`, b$`WJP Rule of Law Index: Overall Score`, nbins = 20, polyreg = TRUE)
 
 summary(x3)
 
 x4 <- binsreg(log(b$total_cases_per_million), b$gini_index_world_bank_estimate, w = log(b$`Cumulative total per thousand`), nbins = 20)
 
 summary(x4)
+
 ```
 
